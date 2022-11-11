@@ -1,0 +1,200 @@
+{
+    "language": "English",
+    "@language":{
+      "description": "The current Language"
+    },
+    "helloWorld": "Hello World!",
+    "@helloWorld": {
+      "description": "A programmer greeting"
+    },
+    "hello": "Hello {username}",
+    "@hello": {
+      "description": "A welcome message",
+      "placeholders": {
+         "username": {
+           "type": "String"
+         }
+      }
+    },
+    "add_item": "Add Item",
+    "@add_item": {
+      "description": "A programmer greeting"
+    },
+    "home_page": "Home page",
+    "@home_page": {
+      "description": "A programmer greeting"
+    },
+    "bar_code": "BarCode",
+    "@bar_code": {
+      "description": "A programmer greeting"
+    },
+    "bar_code_text": "Please enter BarCode",
+    "@bar_code_text": {
+      "description": "A programmer greeting"
+    },
+    "supplier": "Suppliers",
+    "@supplier": {
+      "description": "A programmer greeting"
+    },
+    "supplier_text": "Please select Supplier",
+    "@supplier_text": {
+      "description": "A programmer greeting"
+    },
+    "name": "Name",
+    "@name": {
+      "description": "A programmer greeting"
+    },
+    "name_text": "Please enter name",
+    "@name_text": {
+      "description": "A programmer greeting"
+    }, 
+    "required": "Required",
+    "@required": {
+      "description": "A programmer greeting"}
+      ,
+    "price": "Price",
+    "@price": {
+      "description": "A programmer greeting"
+    },
+    "price_text": "Please enter price",
+    "@price_text": {
+      "description": "A programmer greeting"
+    },
+    "ratio": "Profit Ratio",
+    "@ratio": {
+      "description": "A programmer greeting"
+    },
+    "ratio_text": "Please enter Profit Ratio",
+    "@ratio_text": {
+      "description": "A programmer greeting"
+    },
+    "item_category": "Item category: ",
+    "@item_category": {
+      "description": "A programmer greeting"
+    },
+    "expiration": "Expiration time",
+    "@expiration": {
+      "description": "A programmer greeting"
+    },
+    "expiration_text": "Please enter the expiry time in a months",
+    "@expiration_text": {
+      "description": "A programmer greeting"
+    },
+    "description": "Description",
+    "@description": {
+      "description": "A programmer greeting"
+    },
+    "description_text": "Please enter item description",
+    "@description_text": {
+      "description": "A programmer greeting"
+    },
+    "save": "Click here to save! ",
+    "@save": {
+      "description": "A programmer greeting"
+    },
+    "sale_by": "sale by:  ",
+    "@sale_by": {
+      "description": "A programmer greeting"
+    },
+    "factory": "Factory",
+    "@factory": {
+      "description": "A programmer greeting"
+    },
+    "factory_text": "Please enter item factory: ",
+    "@factory_text": {
+      "description": "A programmer greeting"
+    },
+    "address": "Address",
+    "@address": {
+      "description": "A programmer greeting"
+    },
+    "address_text": "Please enter address: ",
+    "@address_text": {
+      "description": "A programmer greeting"
+    },
+    "add_supplier": "Add supplier",
+    "@add_supplier": {
+      "description": "A programmer greeting"
+    },
+    "add_worker": "Add worker",
+    "@add_worker": {
+      "description": "A programmer greeting"
+    },
+    "add_customer": "Add customer",
+    "@add_customer": {
+      "description": "A programmer greeting"
+    },
+    "phone": "Phone",
+    "@phone": {
+      "description": "A programmer greeting"
+    },
+    "phone_text": "Please enter phone",
+    "@phone_text": {
+      "description": "A programmer greeting"
+    },
+    "email": "Email",
+    "@email": {
+      "description": "A programmer greeting"
+    },
+    "email_text": "Please enter email",
+    "@email_text": {
+      "description": "A programmer greeting"
+    },
+    "salary": "Salary",
+    "@salary": {
+      "description": "A programmer greeting"
+    },
+    "salary_text": "Please enter salary",
+    "@salary_text": {
+      "description": "A programmer greeting"
+    },
+    "position": "Position",
+    "@position": {
+      "description": "A programmer greeting"
+    },
+     "bill_receipt": "Bill receipt",
+    "@bill_receipt": {
+      "description": "A programmer greeting"
+    },
+    "recipient": "Recipient",
+    "@recipient": {
+      "description": "A programmer greeting"
+    },
+    "date": "Date",
+    "@date": {
+      "description": "A programmer greeting"
+    },
+    "payment_method": "Payment method",
+    "@payment_method": {
+      "description": "A programmer greeting"
+    },
+    "number": "Number",
+    "@number": {
+      "description": "A programmer greeting"
+    },
+    "total_price": "Total price",
+    "@number": {
+      "description": "A programmer greeting"
+    },
+    "start_time": "Work start date",
+    "@start_time": {
+      "description": "A programmer greeting"
+    },
+    "start_time_text": "Please select a start date",
+    "@start_time_text": {
+      "description": "A programmer greeting"
+    },
+    "end_time": "Work end date",
+    "@start_time": {
+      "description": "A programmer greeting"
+    },
+    "end_time_text": "Please select an expiry date",
+    "@start_time_text": {
+      "description": "A programmer greeting"
+    }
+    
+    
+
+    
+    
+}
