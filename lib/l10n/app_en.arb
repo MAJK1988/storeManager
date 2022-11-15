@@ -191,7 +191,32 @@
     "end_time_text": "Please select an expiry date",
     "@start_time_text": {
       "description": "A programmer greeting"
-    }
+    },
+
+    "volume": "size",
+    "@volume": {
+      "description": "A programmer greeting"
+    },
+    "volume_text": "Please select the size",
+    "@volume_text": {
+      "description": "A programmer greeting"
+    },
+    "object_add": "Object has been added to database",
+    "@object_add": {
+      "description": "A programmer greeting"
+    },
+    "object_exist": "Object is exist in dataBase",
+    "@object_exist": {
+      "description": "A programmer greeting"
+    },
+    "win": "win",
+    "@win": {
+      "description": "A programmer greeting"
+    },
+    "win_text": "Please select the win",
+    "@win_text": {
+      "description": "A programmer greeting"}
+    
     
     
 

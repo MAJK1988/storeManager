@@ -80,9 +80,9 @@ class DBProvider {
     (table.first['id']).toString();
     // ignore: prefer_is_empty
     (table.first.isEmpty)
-        ? id = 1
+        ? id = 0
         : (table.first['id'] == null)
-            ? id = 1
+            ? id = 0
             : id = int.parse((table.first['id']).toString());
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
@@ -96,8 +96,8 @@ class DBProvider {
           outSidePerson.address,
           outSidePerson.phoneNumber,
           outSidePerson.email,
-          "${type}Item$id",
-          "${type}Bill$id",
+          "${type}Items$id",
+          "${type}Bills$id",
         ]);
     return raw;
   }
@@ -122,9 +122,9 @@ class DBProvider {
     (table.first['id']).toString();
     // ignore: prefer_is_empty
     (table.first.isEmpty)
-        ? id = 1
+        ? id = 0
         : (table.first['id'] == null)
-            ? id = 1
+            ? id = 0
             : id = int.parse((table.first['id']).toString());
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
@@ -166,15 +166,16 @@ class DBProvider {
     (table.first['id']).toString();
     // ignore: prefer_is_empty
     (table.first.isEmpty)
-        ? id = 1
+        ? id = 0
         : (table.first['id'] == null)
-            ? id = 1
+            ? id = 0
             : id = int.parse((table.first['id']).toString());
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
+
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,name,barCode,category,description,prices,validityPeriod,volume,supplierID,customerID,count )"
-        " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT Into $tableName (id,name,barCode, category,description,soldBy, madeIn,prices,validityPeriod, volume,actualPrice,actualWin, supplierID,customerID,count )"
+        " VALUES (?,?,? ,?,?,? ,?,?,? ,?,?,?, ?,?,?)",
         [
           id,
           item.name,
@@ -182,13 +183,18 @@ class DBProvider {
           //
           item.category,
           item.description,
-          item.prices,
+          item.soldBy,
           //
+          item.madeIn,
+          "prices$id",
           item.validityPeriod,
-          item.volume,
-          item.supplierID,
-          item.customerID,
           //
+          item.volume,
+          item.actualPrice,
+          item.actualWin,
+          //
+          "supplierID$id",
+          "customerID$id",
           item.count
         ]);
     return raw;
@@ -215,15 +221,15 @@ class DBProvider {
     (table.first['id']).toString();
     // ignore: prefer_is_empty
     (table.first.isEmpty)
-        ? id = 1
+        ? id = 0
         : (table.first['id'] == null)
-            ? id = 1
+            ? id = 0
             : id = int.parse((table.first['id']).toString());
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,name,address, capacity,availableCapacity,historyStorage, depotListItem )"
-        " VALUES (?,?,? ,?,?,? ,? )",
+        "INSERT Into $tableName (id,name,address, capacity,availableCapacity,billsID, depotListItem )"
+        " VALUES (?,?,?,?,?,?,? )",
         [
           id,
           depot.name,
@@ -231,7 +237,7 @@ class DBProvider {
           //
           depot.capacity,
           depot.availableCapacity,
-          depot.historyStorage,
+          "depotBillsID$id",
           //
           "depotListItem$id"
         ]);
@@ -260,9 +266,9 @@ class DBProvider {
     (table.first['id']).toString();
     // ignore: prefer_is_empty
     (table.first.isEmpty)
-        ? id = 1
+        ? id = 0
         : (table.first['id'] == null)
-            ? id = 1
+            ? id = 0
             : id = int.parse((table.first['id']).toString());
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
@@ -303,14 +309,14 @@ class DBProvider {
     (table.first['id']).toString();
     // ignore: prefer_is_empty
     (table.first.isEmpty)
-        ? id = 1
+        ? id = 0
         : (table.first['id'] == null)
-            ? id = 1
+            ? id = 0
             : id = int.parse((table.first['id']).toString());
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,IDItem,number, productDate,win,price)"
+        "INSERT Into $tableName (id,IDItem,number, productDate,win,price, depotID)"
         " VALUES (?,?,? ,?,?,? )",
         [
           id,
@@ -318,7 +324,8 @@ class DBProvider {
           itemBill.number,
           itemBill.productDate,
           itemBill.win,
-          itemBill.price
+          itemBill.price,
+          itemBill.depotID
         ]);
     return raw;
   }
@@ -358,27 +365,108 @@ class DBProvider {
     return res;
   }
 
-  deleteObject(
-      {required var v, required String tableName, required int id}) async {
+  deleteObject({required String tableName, required int id}) async {
     // updateObject is a function that used to delete an item in a table "tableName"
     final db = await database;
     var res = await db.delete(tableName, where: "id = ?", whereArgs: [id]);
     return res;
   }
 
-  tableHasName({required String tableName, required String name}) async {
+  tableSearchName(
+      {required String tableName,
+      required String elementSearch,
+      required String element}) async {
     // search if the name is exist in table
     final db = await database;
     String checkExistName =
-        "SELECT * FROM $tableName WHERE name LIKE '%$name%'";
+        "SELECT * FROM $tableName WHERE $element LIKE '%$elementSearch%'";
 
-    var nameExist = await db.rawQuery(checkExistName);
-    Log(
-        tag: "tableHasName",
-        message: "$tableName has name '$name':  ${nameExist.isNotEmpty}");
-    return nameExist;
+    var res = await db.rawQuery(checkExistName);
+    return res;
   }
 
+  tableSortBy(
+      {required String tableName,
+      required String element,
+      String order = "DESC"}) async {
+    // sort table  by element (date)
+    final db = await database;
+    String checkExistName =
+        "SELECT * FROM $tableName ORDER BY $element $order"; //DESC ASC
+    var res = await db.rawQuery(checkExistName);
+    return res;
+  }
+
+  //SELECT * FROM $tableName WHERE $element <= '2016-03-09' AND $element >= '2019-08-11'
+
+  tableBetweenDates(
+      {required String tableName, required String element}) async {
+    // sort table  by element (date)
+    final db = await database;
+    String checkExistName =
+        "SELECT * FROM $tableName WHERE $element <= '2019-08-11' AND $element >= '2016-03-09'";
+    var res = await db.rawQuery(checkExistName);
+    return res;
+  }
+
+  Future<List<Item>> getAllItems() async {
+    // An function that return all item in data base
+    final db = await database;
+    var res = await db.query(itemTableName);
+    return res.isNotEmpty
+        ? (res.isNotEmpty ? res.map((c) => Item.fromJson(c)).toList() : [])
+        : [];
+  }
+
+  Future<bool> tableHasObject(
+      {required String element,
+      required String searchFor,
+      String tableName = itemTableName}) async {
+    // An function that return all item in data base
+    final db = await database;
+
+    var res = await db
+        .query(tableName, where: "$element = ?", whereArgs: [searchFor]);
+    return res.isNotEmpty;
+    ;
+  }
+
+  Future<List<Supplier>> getAllSupplier({String type = ""}) async {
+    // An function that return all supplier or customer in data base
+    final db = await database;
+    var res =
+        await db.query(type == "" ? supplierTableName : customerTableName);
+    return res.isNotEmpty
+        ? (res.isNotEmpty
+            ? res
+                .map((sup) => Supplier.fromJson(
+                    sup, type == "" ? supplierType : customerType))
+                .toList()
+            : [])
+        : [];
+  }
+
+  Future<List<Worker>> getAllWorkers() async {
+    // An function that return all supplier or customer in data base
+    final db = await database;
+    var res = await db.query(workerTableName);
+    return res.isNotEmpty
+        ? (res.isNotEmpty
+            ? res.map((worker) => Worker.fromJson(worker)).toList()
+            : [])
+        : [];
+  }
+
+  Future<List<Depot>> getAllDepots() async {
+    // An function that return all supplier or customer in data base
+    final db = await database;
+    var res = await db.query(depotTableName);
+    return res.isNotEmpty
+        ? (res.isNotEmpty
+            ? res.map((depot) => Depot.fromJson(depot)).toList()
+            : [])
+        : [];
+  }
 /*
   newUser(User newUser) async {
     final db = await database;

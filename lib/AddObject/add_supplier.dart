@@ -8,15 +8,36 @@ import '../utils/utils.dart';
 
 class AddSupplier extends StatefulWidget {
   final String title;
+  final String type;
   final bool visible;
-  const AddSupplier({super.key, required this.title, this.visible = false});
+  const AddSupplier(
+      {super.key,
+      required this.title,
+      this.visible = false,
+      this.type = supplierType});
 
   @override
   State<AddSupplier> createState() => _AddSupplierState();
 }
 
 class _AddSupplierState extends State<AddSupplier> {
+  TextEditingController registerDate = TextEditingController(),
+      startDate = TextEditingController(),
+      endDate = TextEditingController();
+  late String tag = "AddSupplier";
   final _formKey = GlobalKey<FormState>();
+  @override
+  void initState() {
+    // TODO: implement initState
+    tag = "$tag/${widget.type}";
+    super.initState();
+  }
+
+  late String registerTime = "",
+      name = "",
+      phoneNumber = "",
+      email = "",
+      address = "";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,28 +52,40 @@ class _AddSupplierState extends State<AddSupplier> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // name and address
+                // register date and name
                 Padding(
                   padding: EdgeInsets.only(
                       right: padding, left: padding, bottom: padding),
                   child: Row(
                     children: <Widget>[
                       Flexible(
+                        child: inputElementDateFormField(
+                            controller: registerDate,
+                            context: context,
+                            padding: padding,
+                            icon: Icons.date_range,
+                            hintText: AppLocalizations.of(context)!.date,
+                            labelText: AppLocalizations.of(context)!.date,
+                            onChanged: ((value) {
+                              Log(tag: tag, message: "String date: $value");
+                              setState(() {
+                                registerDate.text = value!;
+                                registerTime = value;
+                              });
+                            })),
+                      ),
+                      Flexible(
                         child: inputElementTextFormField(
                             padding: padding,
                             icon: Icons.edit_note,
                             hintText: AppLocalizations.of(context)!.name_text,
                             labelText: AppLocalizations.of(context)!.name,
-                            onChanged: ((value) {})),
-                      ),
-                      Flexible(
-                        child: inputElementTextFormField(
-                            padding: padding,
-                            icon: Icons.location_on,
-                            hintText:
-                                AppLocalizations.of(context)!.address_text,
-                            labelText: AppLocalizations.of(context)!.address,
-                            onChanged: ((value) {})),
+                            onChanged: ((value) {
+                              setState(() {
+                                name = value!;
+                              });
+                            })),
+                        /**/
                       ),
                     ],
                   ),
@@ -70,7 +103,11 @@ class _AddSupplierState extends State<AddSupplier> {
                             icon: Icons.phone,
                             hintText: AppLocalizations.of(context)!.phone_text,
                             labelText: AppLocalizations.of(context)!.phone,
-                            onChanged: ((value) {})),
+                            onChanged: ((value) {
+                              setState(() {
+                                phoneNumber = value!;
+                              });
+                            })),
                       ),
                       Flexible(
                         child: inputElementTextFormField(
@@ -79,10 +116,28 @@ class _AddSupplierState extends State<AddSupplier> {
                             icon: Icons.email,
                             hintText: AppLocalizations.of(context)!.email_text,
                             labelText: AppLocalizations.of(context)!.email,
-                            onChanged: ((value) {})),
+                            onChanged: ((value) {
+                              setState(() {
+                                email = value!;
+                              });
+                            })),
                       ),
                     ],
                   ),
+                ),
+                // address
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: inputElementTextFormField(
+                      padding: padding,
+                      icon: Icons.location_on,
+                      hintText: AppLocalizations.of(context)!.address_text,
+                      labelText: AppLocalizations.of(context)!.address,
+                      onChanged: ((value) {
+                        setState(() {
+                          address = value!;
+                        });
+                      })),
                 ),
                 // Start and end time
                 Visibility(
@@ -94,6 +149,7 @@ class _AddSupplierState extends State<AddSupplier> {
                       children: <Widget>[
                         Flexible(
                           child: inputElementDateFormField(
+                              controller: startDate,
                               padding: padding,
                               context: context,
                               icon: Icons.date_range,
@@ -105,6 +161,7 @@ class _AddSupplierState extends State<AddSupplier> {
                         ),
                         Flexible(
                           child: inputElementDateFormField(
+                              controller: endDate,
                               padding: padding,
                               context: context,
                               icon: Icons.date_range,
@@ -178,35 +235,115 @@ class _AddSupplierState extends State<AddSupplier> {
                         backgroundColor: Colors.blue,
                       ),
                       onPressed: () async {
-                        /*// Function that add 10 suppliers to dataBase
-                        addSuppliersToDatabase();
+                        if (_formKey.currentState!.validate()) {
+                          Log(tag: tag, message: "Form is validate");
+                          if (widget.type == supplierType ||
+                              widget.type == customerType) {
+                            // add supplier or customer to dataBase
+                            bool hasEmail = await DBProvider.db.tableHasObject(
+                                element: "email",
+                                searchFor: email,
+                                tableName: (widget.type == supplierType
+                                    ? supplierTableName
+                                    : customerTableName));
+                            bool hasPhoneNumber = await DBProvider.db
+                                .tableHasObject(
+                                    element: "phoneNumber",
+                                    searchFor: phoneNumber,
+                                    tableName: (widget.type == supplierType
+                                        ? supplierTableName
+                                        : customerTableName));
+                            if (!(hasPhoneNumber || hasEmail)) {
+                              Supplier supplier = Supplier(
+                                  Id: 0,
+                                  registerTime: registerTime,
+                                  name: name,
+                                  address: address,
+                                  phoneNumber: phoneNumber,
+                                  email: email,
+                                  type: widget.type,
+                                  itemId: " ",
+                                  billId: "");
+                              int result = await DBProvider.db.addNewSupplier(
+                                  outSidePerson: supplier, type: supplier.type);
+                              Log(
+                                  tag: tag,
+                                  message:
+                                      "add supplier to Database result: $result");
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(SnackBar(
+                                      content: Text(
+                                // ignore: use_build_context_synchronously
+                                AppLocalizations.of(context)!.object_add,
+                              )));
+                            } else {
+                              Log(
+                                  tag: tag,
+                                  message: "Item is exist in dataBase");
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(SnackBar(
+                                      content: Text(
+                                // ignore: use_build_context_synchronously
+                                AppLocalizations.of(context)!.object_exist,
+                              )));
+                            }
+                          }
+                        }
+                        // Function that add 10 suppliers to dataBase
+                        //addSuppliersToDatabase();
                         // Function that add 10 customers to dataBase
-                        addSuppliersToDatabase(type: "Customer");
+                        //addSuppliersToDatabase(type: "Customer");
                         // Function that add worker to dataBase
-                        addWorkersToDatabase( workersNumber:3);
-                        await DBProvider.db
-                            .deleteTable(tableName: workerTableName);
-                        
-                        // addSuppliersToDatabase(type: "Customer");
+                        //addWorkersToDatabase(workersNumber: 3);
+                        // Function that add depot to dataBase
+                        //addDepotToDatabase(depotNumber: 3);
+                        // Function that add 300 item
+                        //addItemToDatabase(itemNumber: 300);
 
-                        var res = await DBProvider.db.tableHasName(
-                            tableName: supplierTableName, name: 'Mahmoud');
-                        if (res.isNotEmpty) {
+                        /*List<Item> items = await DBProvider.db.getAllItems();
+                        for (Item item in items) {
+                          Log(tag: "Get Item name", message: item.name);
+                        }
+                        List<Supplier> suppliers = await DBProvider.db
+                            .getAllSupplier(type: customerType);
+                        for (Supplier supplier in suppliers) {
                           Log(
-                              tag: "add_supplier",
-                              message:
-                                  "Search function return value: ${res.length}");
+                              tag: "Get Item name ${supplier.type}",
+                              message: supplier.name);
+                        }
+                        List<Worker> workers =
+                            await DBProvider.db.getAllWorkers();
+                        for (Worker worker in workers) {
+                          Log(tag: "Get Item name ", message: worker.name);
+                        }
+                        var res = await DBProvider.db.tableBetweenDates(
+                            tableName: customerTableName,
+                            element: "registerTime");
+                        Log(
+                            tag: "Check search ",
+                            message: "res isn't null? : ${res.isNotEmpty}");
+                        if (res.isNotEmpty) {
+                          List<Supplier> objects = (res.isNotEmpty
+                              ? (res.isNotEmpty
+                                  ? res
+                                      .map<Supplier>((depot) =>
+                                          Supplier.fromJson(
+                                              depot, customerType))
+                                      .toList()
+                                  : [])
+                              : []) as List<Supplier>;
 
-                          for (Map<String, dynamic> sj in res) {
-                            Supplier s = Supplier.fromJson(sj, supplierType);
-
+                          for (Supplier object in objects) {
                             Log(
-                                tag: "Search result",
-                                message: "name: ${s.name}, email: ${s.email} ");
-
+                                tag: "Get object name ",
+                                message: object.registerTime);
                           }
                         }*/
-                        addItemToDatabase(itemNumber: 300);
+                        /*DBProvider.db.deleteTable(tableName: itemTableName);
+                         DBProvider.db.deleteTable(tableName: supplierTableName);
+                        DBProvider.db.deleteTable(tableName: depotTableName);*/
                       },
                       child: Text(
                         AppLocalizations.of(context)!.save,

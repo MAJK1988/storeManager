@@ -28,14 +28,34 @@ Widget inputElementTextFormField(
         labelText: labelText,
       ),
       validator: (value) {
-        onChanged(value);
-        if (value!.isEmpty) {
+        if (value!.isEmpty || !isNumeric(value, textInputType)) {
           return 'Please enter $hintText';
+        } else {
+          onChanged(value);
         }
         return null;
       },
     ),
   );
+}
+
+bool isNumeric(String s, TextInputType textInputType) {
+  if (textInputType == TextInputType.text) {
+    return true;
+  }
+  if (s == null) {
+    return false;
+  }
+  if (textInputType == TextInputType.number) {
+    return double.tryParse(s) != null;
+  }
+  if (textInputType == TextInputType.emailAddress) {
+    return RegExp(
+            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(s);
+  }
+
+  return true;
 }
 
 Widget inputElementDateFormField(
@@ -46,10 +66,12 @@ Widget inputElementDateFormField(
     required String hintText,
     required String labelText,
     required BuildContext context,
+    required TextEditingController? controller,
     required ValueChanged<String?> onChanged}) {
   return Padding(
     padding: EdgeInsets.all(padding),
     child: TextFormField(
+      controller: controller,
       minLines: minLine,
       maxLines: minLine + 4,
       expands: false,
@@ -71,6 +93,7 @@ Widget inputElementDateFormField(
           //pickedDate output format => 2021-03-10 00:00:00.000
           String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
           //formatted date output using intl package =>  2021-03-16
+
           onChanged(formattedDate);
         } else {}
       },
@@ -123,26 +146,30 @@ Widget titleElementTable({required String title}) {
 }
 
 Widget inputElementTable(
-    {required ValueChanged<String?> onChanged,
+    {required ValueChanged<String?> onChang,
     required BuildContext context,
+    String hintText = "",
     TextInputType textInputType = TextInputType.text}) {
   return Center(
-    child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: TextFormField(
-          keyboardType: textInputType,
-          decoration: const InputDecoration(
-            border: UnderlineInputBorder(),
-          ),
-          validator: (value) {
-            onChanged(value);
-            if (value!.isEmpty) {
-              return AppLocalizations.of(context)!.required;
-            }
-            return null;
-          },
-        )),
-  );
+      child: Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: TextFormField(
+        keyboardType: textInputType,
+        decoration: InputDecoration(
+            border: const UnderlineInputBorder(
+              borderSide: BorderSide(),
+            ),
+            hintText: hintText),
+        validator: (value) {
+          if (value!.isEmpty) {
+            return AppLocalizations.of(context)!.required;
+          }
+          return null;
+        },
+        onChanged: (value) {
+          onChang(value);
+        }),
+  ));
 }
 
 TableRow inputDataBillInTable({required ItemBill itemBillIn}) {
@@ -192,8 +219,8 @@ addSuppliersToDatabase({String type = ""}) async {
         address: addressArray.elementAt(i),
         phoneNumber:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
-        email: "email$i@mail.eu",
-        type: customerType,
+        email: "email$i${((Random().nextInt(35) + 1))}@mail.eu",
+        type: type == "" ? supplierType : customerType,
         itemId: "null",
         billId: "null");
 
@@ -231,12 +258,15 @@ addItemToDatabase({required int itemNumber}) async {
     Item item = Item(
         ID: 0,
         name: "name$i",
-        soldBy: "Kg",
+        soldBy: ((Random().nextInt(35) + 1) > 16) ? "Kg" : "unit",
+        madeIn: ((Random().nextInt(35) + 1) > 16) ? "China" : "France",
         barCode:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
         category: (Random().nextInt(29) + 1).toString(),
         description: "description$i",
         prices: "prices$i",
+        actualPrice: Random().nextDouble() * (20 - 0.1) + 0.1,
+        actualWin: Random().nextDouble() * (0.2 - 0.1) + 0.1,
         validityPeriod: (Random().nextInt(35) + 1),
         volume: Random().nextDouble() * (0.5 - 0.1) + 0.1,
         supplierID: "supplierID$i",
@@ -245,6 +275,26 @@ addItemToDatabase({required int itemNumber}) async {
 
     int result = await DBProvider.db.addNewItem(item: item);
     Log(tag: " addItemToDatabase", message: "$result");
+  }
+}
+
+addDepotToDatabase({required int depotNumber}) async {
+  Log(tag: "addDepotToDatabase", message: "Start function");
+  for (int i = 0; i < depotNumber; i++) {
+    Depot depot = Depot(
+        Id: 0,
+        name: "name$i",
+        address: "adrress$i",
+        capacity: Random().nextDouble() * (45 - 16) + 16.1,
+        availableCapacity: 0,
+        billsID: "",
+        depotListItem: ""
+
+        // soldBy: ((Random().nextInt(35) + 1) > 16) ? "Kg" : "unit",
+        );
+
+    int result = await DBProvider.db.addNewDepot(depot: depot);
+    Log(tag: " addDepotToDatabase", message: "$result");
   }
 }
 

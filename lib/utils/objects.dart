@@ -6,6 +6,7 @@ class ItemBill {
   late final String productDate;
   late final double win;
   late final double price;
+  late final depotID;
 
   ItemBill(
       {required this.id,
@@ -13,7 +14,8 @@ class ItemBill {
       required this.number,
       required this.productDate,
       required this.win,
-      required this.price});
+      required this.price,
+      required this.depotID});
 
   // read ItemBillIn from json object
   ItemBill.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class ItemBill {
     productDate = json['ManufactureDate'];
     win = json['win'];
     price = json['price'];
+    depotID = json['depotID'];
   }
 
   //from json to ItemBillIn object
@@ -34,6 +37,7 @@ class ItemBill {
     _data['productDate'] = productDate;
     _data['win'] = win;
     _data['price'] = price;
+    _data['depotID'] = depotID;
     return _data;
   }
 
@@ -45,7 +49,8 @@ class ItemBill {
         "number INTEGER,"
         "productDate TEXT,"
         "win REAL,"
-        "price REAL"
+        "price REAL,"
+        "depotID INTEGER"
         ")";
   }
 }
@@ -53,7 +58,7 @@ class ItemBill {
 // Bill bay
 class Bill {
   late final int ID;
-  late final int depotId;
+  late final String depotId;
   late final DateTime dateTime;
   late final String outsidePersonId;
   late final int type;
@@ -126,13 +131,13 @@ String createColumnTable({required String name}) {
       ")";
 }
 
-String supplierType = "Supplier",
+const String supplierType = "Supplier",
     customerType = "Customer",
-    customerTableName = "Customers",
-    supplierTableName = "Suppliers",
-    workerTableName = "Workers",
-    depotTableName = "DepotTab",
-    itemTableName = "ItemsTab";
+    customerTableName = "CustomersTable",
+    supplierTableName = "SuppliersTable",
+    workerTableName = "WorkersTable",
+    depotTableName = "DepotsTable",
+    itemTableName = "ItemTableP";
 
 class Supplier {
   // outSidePerson has twÒo types: Supplier, Customer
@@ -158,14 +163,14 @@ class Supplier {
       required this.billId});
 
   // read OutsidePerson from json object
-  Supplier.fromJson(Map<String, dynamic> json, String type) {
+  Supplier.fromJson(Map<String, dynamic> json, String typeIn) {
     Id = json['id'];
     registerTime = json['registerTime'];
     name = json['name'];
     address = json['address'];
     phoneNumber = json['phoneNumber'];
     email = json['email'];
-    type = type;
+    type = typeIn;
     itemId = json['itemId'];
     billId = json['billId'];
   }
@@ -239,12 +244,18 @@ class Item {
   late final int ID;
   late final String name;
   late final String barCode;
+
   late final String category;
   late final String description;
   late final String soldBy;
+
+  late final String madeIn;
   late final String prices; // name of table,  table has change of item price
   late final double validityPeriod;
+
   late final double volume;
+  late final double actualPrice;
+  late final double actualWin;
   late final String
       supplierID; // name of table, row table has id of item supplier
   late final String
@@ -258,9 +269,12 @@ class Item {
       required this.category,
       required this.description,
       required this.soldBy,
+      required this.madeIn,
       required this.prices,
       required this.validityPeriod,
       required this.volume,
+      required this.actualPrice,
+      required this.actualWin,
       required this.supplierID,
       required this.customerID,
       required this.count});
@@ -269,14 +283,21 @@ class Item {
     ID = json['id'];
     name = json['name'];
     barCode = json['barCode'];
+
     category = json['category'];
     description = json['description'];
     soldBy = json['soldBy'];
+
+    madeIn = json['madeIn'];
     prices = json['prices'];
     validityPeriod = json['validityPeriod'];
+
     volume = json['volume'];
+    actualPrice = json['actualPrice'];
+    actualWin = json['actualWin'];
     supplierID = json['supplierID'];
     customerID = json['customerID'];
+
     count = json['count'];
   }
   //from json to ItemBillIn BillIn
@@ -285,15 +306,23 @@ class Item {
     _data['id'] = ID;
     _data['name'] = name;
     _data['barCode'] = barCode;
+
     _data['category'] = category;
     _data['soldBy'] = soldBy;
+    _data['madeIn'] = madeIn;
+
     _data['description'] = description;
     _data['prices'] = prices;
     _data['validityPeriod'] = validityPeriod;
+
     _data['volume'] = volume;
+    _data['actualPrice'] = actualPrice;
+    _data['actualWin'] = actualWin;
     _data['supplierID'] = supplierID;
     _data['customerID'] = customerID;
+
     _data['count'] = count;
+
     return _data;
   }
 
@@ -304,15 +333,35 @@ class Item {
         "name TEXT,"
         "barCode TEXT NOT NULL UNIQUE,"
         "category TEXT,"
+        //
+        "soldBy TEXT,"
+        "madeIn TEXT,"
         "description TEXT,"
         "prices REAL,"
-        "validityPeriod TEXT,"
+        "validityPeriod REAL,"
         "volume REAL,"
+        "actualPrice REAL,"
+        "actualWin REAL,"
         "supplierID TEXT NOT NULL UNIQUE,"
         "customerID TEXT NOT NULL UNIQUE,"
         "count INT"
         ")";
   }
+}
+
+List<String> getElementsItems() {
+  return [
+    "id",
+    "name",
+    "barCode",
+    "category",
+    "soldBy",
+    "madeIn",
+    "prices",
+    "supplierID",
+    "customerID",
+    "count"
+  ];
 }
 
 class Worker {
@@ -385,8 +434,8 @@ class Depot {
   late final String name;
   late final double capacity;
   late final double availableCapacity;
-  late final String historyStorage; // table name, historyStorage$Id
-  late final String depotListItem; // table name, depotListItem$Id
+  late final String billsID; // table name,
+  late final String depotListItem; // table name
 
   Depot(
       {required this.Id,
@@ -394,7 +443,7 @@ class Depot {
       required this.name,
       required this.capacity,
       required this.availableCapacity,
-      required this.historyStorage,
+      required this.billsID,
       required this.depotListItem});
 
   // read Depot from json object
@@ -405,7 +454,7 @@ class Depot {
 
     capacity = json['capacity'];
     availableCapacity = json['availableCapacity'];
-    historyStorage = json['historyStorage'];
+    billsID = json['billsID'];
 
     depotListItem = json['depotListItem'];
   }
@@ -418,7 +467,7 @@ class Depot {
 
     _data['capacity'] = capacity;
     _data['availableCapacity'] = availableCapacity;
-    _data['historyStorage'] = historyStorage;
+    _data['billsID'] = billsID;
 
     _data['depotListItem'] = depotListItem;
 
@@ -433,8 +482,8 @@ class Depot {
         "address TEXT,"
         "capacity REAL,"
         "availableCapacity REAL,"
-        "historyStorage TEXT,"
-        "depotListItem TEXT,"
+        "billsID TEXT,"
+        "depotListItem TEXT"
         ")";
   }
 }

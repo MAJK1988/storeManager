@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
+import '../dataBase/sql_object.dart';
+import '../utils/objects.dart';
 import '../utils/utils.dart';
 
 class AddItem extends StatefulWidget {
@@ -56,7 +58,6 @@ class _AddItemState extends State<AddItem> {
       .toList();*/
   final _formKey = GlobalKey<FormState>();
 
-  late String name = " ";
   FocusNode searchFocusNode = FocusNode();
   FocusNode textFieldFocusNode = FocusNode();
 
@@ -73,6 +74,14 @@ class _AddItemState extends State<AddItem> {
   final _multiSelectKey = GlobalKey<FormFieldState>();
 
   List<Animal?> _selectedAnimals3 = [];
+  final String tag = "AddItem";
+  late String name = '',
+      codeBar = '',
+      madeIn = '',
+      description = '',
+      category = '',
+      soldBy = '';
+  late double validityPeriod = 0.0, volume = 0.0, price = 0.0, win = 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +112,11 @@ class _AddItemState extends State<AddItem> {
                             hintText:
                                 AppLocalizations.of(context)!.bar_code_text,
                             labelText: AppLocalizations.of(context)!.bar_code,
-                            onChanged: ((value) {})),
+                            onChanged: ((value) {
+                              setState(() {
+                                codeBar = value!;
+                              });
+                            })),
                       ),
                       Flexible(
                         child: inputElementTextFormField(
@@ -111,13 +124,17 @@ class _AddItemState extends State<AddItem> {
                             icon: Icons.edit_note,
                             hintText: AppLocalizations.of(context)!.name_text,
                             labelText: AppLocalizations.of(context)!.name,
-                            onChanged: ((value) {})),
+                            onChanged: ((value) {
+                              setState(() {
+                                name = value!;
+                              });
+                            })),
                       ),
                     ],
                   ),
                 ),
                 // Supplier and factory
-                Padding(
+                /*Padding(
                   padding: EdgeInsets.only(
                       left: padding * 3, right: padding * 2, bottom: padding),
                   child: Row(
@@ -158,34 +175,7 @@ class _AddItemState extends State<AddItem> {
                           ),
                         ),
                       ),
-                      Flexible(
-                        child: inputElementTextFormField(
-                            padding: padding,
-                            icon: Icons.factory,
-                            hintText:
-                                AppLocalizations.of(context)!.factory_text,
-                            labelText: AppLocalizations.of(context)!.factory,
-                            onChanged: ((value) {})),
-                      ),
-                    ],
-                  ),
-                ),
-                // price and ratio
-                Padding(
-                  padding: EdgeInsets.only(
-                      right: padding, left: padding, bottom: padding),
-                  child: Row(
-                    children: <Widget>[
-                      Flexible(
-                        child: inputElementTextFormField(
-                            padding: padding,
-                            textInputType: TextInputType.number,
-                            icon: Icons.local_atm_rounded,
-                            hintText: AppLocalizations.of(context)!.price_text,
-                            labelText: AppLocalizations.of(context)!.price,
-                            onChanged: ((value) {})),
-                      ),
-                      Flexible(
+                       Flexible(
                         child: inputElementTextFormField(
                             padding: padding,
                             textInputType: TextInputType.number,
@@ -196,7 +186,79 @@ class _AddItemState extends State<AddItem> {
                       ),
                     ],
                   ),
+                ),*/
+                // volume and factory
+                Padding(
+                  padding: EdgeInsets.only(
+                      right: padding, left: padding, bottom: padding),
+                  child: Row(
+                    children: <Widget>[
+                      Flexible(
+                        child: inputElementTextFormField(
+                            padding: padding,
+                            textInputType: TextInputType.number,
+                            icon: Icons.view_in_ar_outlined,
+                            hintText: AppLocalizations.of(context)!.volume,
+                            labelText:
+                                AppLocalizations.of(context)!.volume_text,
+                            onChanged: ((value) {
+                              setState(() {
+                                volume = double.parse(value!);
+                              });
+                            })),
+                      ),
+                      Flexible(
+                        child: inputElementTextFormField(
+                            padding: padding,
+                            icon: Icons.factory,
+                            hintText:
+                                AppLocalizations.of(context)!.factory_text,
+                            labelText: AppLocalizations.of(context)!.factory,
+                            onChanged: ((value) {
+                              setState(() {
+                                madeIn = value!;
+                              });
+                            })),
+                      ),
+                    ],
+                  ),
                 ),
+                // price and win
+                Padding(
+                  padding: EdgeInsets.only(
+                      right: padding, left: padding, bottom: padding),
+                  child: Row(
+                    children: <Widget>[
+                      Flexible(
+                        child: inputElementTextFormField(
+                            padding: padding,
+                            textInputType: TextInputType.number,
+                            icon: Icons.price_check,
+                            hintText: AppLocalizations.of(context)!.price,
+                            labelText: AppLocalizations.of(context)!.price_text,
+                            onChanged: ((value) {
+                              setState(() {
+                                price = double.parse(value!);
+                              });
+                            })),
+                      ),
+                      Flexible(
+                        child: inputElementTextFormField(
+                            padding: padding,
+                            textInputType: TextInputType.number,
+                            icon: Icons.airline_stops_rounded,
+                            hintText: AppLocalizations.of(context)!.win,
+                            labelText: AppLocalizations.of(context)!.win_text,
+                            onChanged: ((value) {
+                              setState(() {
+                                win = double.parse(value!);
+                              });
+                            })),
+                      ),
+                    ],
+                  ),
+                ),
+
                 //expiration and category and sale by
                 Padding(
                   padding: EdgeInsets.only(
@@ -212,7 +274,11 @@ class _AddItemState extends State<AddItem> {
                             hintText:
                                 AppLocalizations.of(context)!.expiration_text,
                             labelText: AppLocalizations.of(context)!.expiration,
-                            onChanged: ((value) {})),
+                            onChanged: ((value) {
+                              setState(() {
+                                validityPeriod = double.parse(value!);
+                              });
+                            })),
                       ),
                       Padding(
                         padding: EdgeInsets.only(left: padding),
@@ -231,7 +297,9 @@ class _AddItemState extends State<AddItem> {
                           ),
                           onChanged: (String? value) {
                             // This is called when the user selects an item.
-                            setState(() {});
+                            setState(() {
+                              category = value!;
+                            });
                           },
                           items: ["one", "two", "three"]
                               .map<DropdownMenuItem<String>>((String value) {
@@ -258,7 +326,9 @@ class _AddItemState extends State<AddItem> {
                           ),
                           onChanged: (String? value) {
                             // This is called when the user selects an item.
-                            setState(() {});
+                            setState(() {
+                              soldBy = value!;
+                            });
                           },
                           items: ["one", "two", "three"]
                               .map<DropdownMenuItem<String>>((String value) {
@@ -282,7 +352,11 @@ class _AddItemState extends State<AddItem> {
                       icon: Icons.description,
                       hintText: AppLocalizations.of(context)!.description_text,
                       labelText: AppLocalizations.of(context)!.description,
-                      onChanged: ((value) {})),
+                      onChanged: ((value) {
+                        setState(() {
+                          description = value!;
+                        });
+                      })),
                 ),
                 //Button save
                 Padding(
@@ -294,7 +368,70 @@ class _AddItemState extends State<AddItem> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                       ),
-                      onPressed: () {},
+                      onPressed: () async {
+                        // It returns true if the form is valid, otherwise returns false
+                        if (_formKey.currentState!.validate()) {
+                          // If the form is valid, display a Snackbar.
+                          Log(tag: tag, message: "the form is valid");
+
+                          Log(tag: tag, message: "name: $name");
+                          Log(tag: tag, message: "codeBar: $codeBar");
+                          Log(tag: tag, message: "madeIn: $madeIn");
+                          Log(tag: tag, message: "description: $description");
+                          Log(tag: tag, message: "category: $category");
+                          Log(tag: tag, message: "soldBy: $soldBy");
+                          Log(
+                              tag: tag,
+                              message: "validityPeriod: $validityPeriod");
+                          Log(tag: tag, message: "volume: $volume");
+
+                          bool hasCodeBar = await DBProvider.db
+                              .tableHasObject(element: "name", searchFor: name);
+                          bool hasName = await DBProvider.db.tableHasObject(
+                              element: "barCode", searchFor: codeBar);
+                          Log(
+                              tag: tag,
+                              message: "table items has codeBar: $hasCodeBar");
+                          Log(tag: tag, message: "table items has name: $name");
+                          if (!hasCodeBar) {
+                            Item item = Item(
+                                ID: 0,
+                                name: name,
+                                soldBy: soldBy,
+                                madeIn: madeIn,
+                                barCode: codeBar,
+                                category: category,
+                                description: description,
+                                prices: " ",
+                                validityPeriod: validityPeriod,
+                                volume: volume,
+                                actualPrice: price,
+                                actualWin: win,
+                                supplierID: " ",
+                                customerID: " ",
+                                count: 0);
+                            int result =
+                                await DBProvider.db.addNewItem(item: item);
+                            Log(
+                                tag: tag,
+                                message: "addItemToDatabase result: $result");
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.object_add,
+                            )));
+                          } else {
+                            Log(tag: tag, message: "Item is exist in dataBase");
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.object_exist,
+                            )));
+                          }
+                        }
+                      },
                       child: Text(
                         AppLocalizations.of(context)!.save,
                         style: const TextStyle(fontSize: 20),
