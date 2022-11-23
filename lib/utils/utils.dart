@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:store_manager/utils/objects.dart';
@@ -14,10 +16,13 @@ Widget inputElementTextFormField(
     required IconData icon,
     required String hintText,
     required String labelText,
+    TextEditingController? controller = null,
+    bool hasValidate = true,
     required ValueChanged<String?> onChanged}) {
   return Padding(
     padding: EdgeInsets.all(padding),
     child: TextFormField(
+      controller: controller,
       minLines: minLine,
       maxLines: minLine + 4,
       expands: false,
@@ -28,10 +33,12 @@ Widget inputElementTextFormField(
         labelText: labelText,
       ),
       validator: (value) {
-        if (value!.isEmpty || !isNumeric(value, textInputType)) {
-          return 'Please enter $hintText';
-        } else {
-          onChanged(value);
+        if (hasValidate) {
+          if (value!.isEmpty || !isNumeric(value, textInputType)) {
+            return 'Please enter $hintText';
+          } else {
+            onChanged(value);
+          }
         }
         return null;
       },
@@ -59,12 +66,13 @@ bool isNumeric(String s, TextInputType textInputType) {
 }
 
 Widget inputElementDateFormField(
-    {required double padding,
+    {double padding = 8,
     int minLine = 1,
     TextInputType textInputType = TextInputType.text,
-    required IconData icon,
-    required String hintText,
-    required String labelText,
+    bool hasValidate = true,
+    IconData icon = Icons.date_range,
+    String hintText = "",
+    String labelText = "",
     required BuildContext context,
     required TextEditingController? controller,
     required ValueChanged<String?> onChanged}) {
@@ -99,8 +107,10 @@ Widget inputElementDateFormField(
       },
       validator: (value) {
         //onChanged(value);
-        if (value!.isEmpty) {
-          return 'Please enter $hintText';
+        if (hasValidate) {
+          if (value!.isEmpty) {
+            return 'Please enter $hintText';
+          }
         }
         return null;
       },
@@ -147,13 +157,21 @@ Widget titleElementTable({required String title}) {
 
 Widget inputElementTable(
     {required ValueChanged<String?> onChang,
+    ValueChanged<int>? ontap,
     required BuildContext context,
+    required TextEditingController? controller,
     String hintText = "",
     TextInputType textInputType = TextInputType.text}) {
   return Center(
       child: Padding(
     padding: const EdgeInsets.all(8.0),
     child: TextFormField(
+        onTap: () {
+          if (ontap != null) {
+            ontap(0);
+          }
+        },
+        controller: controller,
         keyboardType: textInputType,
         decoration: InputDecoration(
             border: const UnderlineInputBorder(
@@ -172,15 +190,31 @@ Widget inputElementTable(
   ));
 }
 
-TableRow inputDataBillInTable({required ItemBill itemBillIn}) {
+TableRow inputDataBillInTable(
+    {required ShowObject showObject,
+    required ValueChanged<int> delete,
+    required int index}) {
+  String tag = "inputDataBillInTable";
+  bool visible = true;
   return TableRow(children: [
-    TableCell(child: centreText(text: itemBillIn.productDate)),
-    TableCell(child: centreText(text: itemBillIn.IDItem.toString())),
-    TableCell(child: centreText(text: itemBillIn.price.toString())),
-    TableCell(child: centreText(text: itemBillIn.number.toString())),
-    TableCell(
-        child: centreText(
-            text: (itemBillIn.price * itemBillIn.number).toStringAsFixed(2)))
+    TableCell(child: centreText(text: showObject.value0)), // name item
+    TableCell(child: centreText(text: showObject.value1)), //number
+    TableCell(child: centreText(text: showObject.value2)), //Production price
+    TableCell(child: centreText(text: showObject.value3)), //Price
+    TableCell(child: centreText(text: showObject.value4)),
+    Stack(children: [
+      TableCell(child: centreText(text: showObject.value5)),
+      Positioned(
+        top: 0,
+        right: 0,
+        child: IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              delete(index);
+              Log(tag: tag, message: "delete object index: $index ");
+            }),
+      ),
+    ])
   ]);
 }
 
@@ -271,6 +305,7 @@ addItemToDatabase({required int itemNumber}) async {
         volume: Random().nextDouble() * (0.5 - 0.1) + 0.1,
         supplierID: "supplierID$i",
         customerID: "customerID$i",
+        depotID: "depotID$i",
         count: 0);
 
     int result = await DBProvider.db.addNewItem(item: item);

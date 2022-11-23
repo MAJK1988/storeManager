@@ -1,12 +1,12 @@
 class ItemBill {
   late final int id;
   late final int IDItem;
-  late final int number;
+  late final double number;
 
   late final String productDate;
   late final double win;
   late final double price;
-  late final depotID;
+  late final int depotID;
 
   ItemBill(
       {required this.id,
@@ -46,7 +46,7 @@ class ItemBill {
     return "CREATE TABLE $tableName ("
         "id INTEGER PRIMARY KEY,"
         "IDItem INTEGER,"
-        "number INTEGER,"
+        "number REAL,"
         "productDate TEXT,"
         "win REAL,"
         "price REAL,"
@@ -137,7 +137,7 @@ const String supplierType = "Supplier",
     supplierTableName = "SuppliersTable",
     workerTableName = "WorkersTable",
     depotTableName = "DepotsTable",
-    itemTableName = "ItemTableP";
+    itemTableName = "ItemsTableDSC";
 
 class Supplier {
   // outSidePerson has twÒo types: Supplier, Customer
@@ -240,6 +240,7 @@ class Price {
   }
 }
 
+/// Items object */
 class Item {
   late final int ID;
   late final String name;
@@ -260,6 +261,7 @@ class Item {
       supplierID; // name of table, row table has id of item supplier
   late final String
       customerID; // name of table, row table has id of item customer
+  late final String depotID; // name of table, row table has id of item customer
   late final int count;
 
   Item(
@@ -277,7 +279,9 @@ class Item {
       required this.actualWin,
       required this.supplierID,
       required this.customerID,
+      required this.depotID,
       required this.count});
+
   // read BillIn from json object
   Item.fromJson(Map<String, dynamic> json) {
     ID = json['id'];
@@ -297,7 +301,7 @@ class Item {
     actualWin = json['actualWin'];
     supplierID = json['supplierID'];
     customerID = json['customerID'];
-
+    depotID = json['depotID'];
     count = json['count'];
   }
   //from json to ItemBillIn BillIn
@@ -320,7 +324,7 @@ class Item {
     _data['actualWin'] = actualWin;
     _data['supplierID'] = supplierID;
     _data['customerID'] = customerID;
-
+    _data['depotID'] = depotID;
     _data['count'] = count;
 
     return _data;
@@ -344,24 +348,85 @@ class Item {
         "actualWin REAL,"
         "supplierID TEXT NOT NULL UNIQUE,"
         "customerID TEXT NOT NULL UNIQUE,"
+        "depotID TEXT NOT NULL UNIQUE,"
         "count INT"
         ")";
   }
 }
 
+class ItemDepot {
+  //table name: ItemDepot$idItem
+  late final int number;
+  late final int depotId;
+  ItemDepot({required this.number, required this.depotId});
+
+  // read BillIn from json object
+  ItemDepot.fromJson(Map<String, dynamic> json) {
+    number = json['number'];
+    depotId = json['depotId'];
+  }
+  //from json to ItemBillIn BillIn
+  Map<String, dynamic> toJson() {
+    final _data = <String, dynamic>{};
+    _data['number'] = number;
+    _data['depotId'] = depotId;
+
+    return _data;
+  }
+
+  // Create sql table
+  String createSqlTable() {
+    return "CREATE TABLE Bill ("
+        "depotId INTEGER NOT NULL PRIMARY KEY,"
+        "number INTEGER NOT NULL"
+        ")";
+  }
+}
+
+class ItemSupplier {
+  //table name: ItemSupplier$idItem
+  late final int supplier;
+  ItemSupplier({required this.supplier});
+
+  // read BillIn from json object
+  ItemSupplier.fromJson(Map<String, dynamic> json) {
+    supplier = json['supplier'];
+  }
+  //from json to ItemBillIn BillIn
+  Map<String, dynamic> toJson() {
+    final _data = <String, dynamic>{};
+    _data['supplier'] = supplier;
+
+    return _data;
+  }
+
+  // Create sql table
+  String createSqlTable() {
+    return "CREATE TABLE Bill ("
+        "supplier INTEGER NOT NULL PRIMARY KEY"
+        ")";
+  }
+}
+
+/// *********** */
 List<String> getElementsItems() {
-  return [
-    "id",
-    "name",
-    "barCode",
-    "category",
-    "soldBy",
-    "madeIn",
-    "prices",
-    "supplierID",
-    "customerID",
-    "count"
-  ];
+  return ["name", "barCode", "category", "soldBy", "madeIn", "prices"];
+}
+
+List<String> getElementsDepot() {
+  return ["name", "address", "Volume"];
+}
+
+List<String> getElementsSupplier() {
+  return ["name", "address", "Email", "Phone", "address"];
+}
+
+List<String> getElementsWorker() {
+  return ["name", "address", "Email", "Phone", "address", "Position"];
+}
+
+List<String> getObjectsNameListAddBillIn() {
+  return ["Item", "Supplier", "Worker", "Depot"];
 }
 
 class Worker {
@@ -491,44 +556,34 @@ class Depot {
 class ItemsDepot {
   late final int id;
   late final int itemId;
-  late final String storageDate;
   late final int number;
 
   late final int billId;
-  late final String productDate;
-  late final double price;
+  late final int itemBillId;
 
   ItemsDepot(
       {required this.id,
       required this.itemId,
-      required this.storageDate,
+      required this.itemBillId,
       required this.number,
-      required this.billId,
-      required this.productDate,
-      required this.price});
+      required this.billId});
 
   // read ItemsDepot from json object
   ItemsDepot.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     itemId = json['itemId'];
-    storageDate = json['storageDate'];
+    itemBillId = json['itemBillId'];
     number = json['number'];
-
     billId = json['billId'];
-    productDate = json['productDate'];
-    price = json['price'];
   }
   //from json to ItemsDepot
   Map<String, dynamic> toJson() {
     final _data = <String, dynamic>{};
     _data['id'] = id;
     _data['itemId'] = itemId;
-    _data['storageDate'] = storageDate;
+    _data['itemBillId'] = itemBillId;
     _data['number'] = number;
-
     _data['billId'] = billId;
-    _data['productDate'] = productDate;
-    _data['price'] = price;
     return _data;
   }
 
@@ -537,11 +592,9 @@ class ItemsDepot {
     return "CREATE TABLE $tableName ("
         "id INTEGER PRIMARY KEY,"
         "itemId INTEGER,"
-        "storageDate TEXT,"
-        "number int,"
-        "billId INTEGER,"
-        "productDate DATE NOT NULL,"
-        "price REAL"
+        "itemBillId INTEGER,"
+        "number INTEGER,"
+        "billId INTEGER"
         ")";
   }
 }
@@ -582,3 +635,61 @@ List<String> addressArray = [
   'LB Akkar al Atika',
   'LB Akkar al Atika'
 ];
+
+// an object user to show data
+class ShowObject {
+  late final String value0;
+  late final String value1;
+  late final String value2;
+  late final String value3;
+  late final String value4;
+  late final String value5;
+  ShowObject(
+      {required this.value0,
+      this.value1 = "",
+      this.value2 = "",
+      this.value3 = "",
+      this.value4 = "",
+      this.value5 = ""});
+  ShowObject.fromJson(Map<String, dynamic> json) {
+    value0 = json['value0'];
+    value1 = json['value1'];
+    value2 = json['value2'];
+    value3 = json['value3'];
+  }
+  ShowObject.fromJsonItem(Map<String, dynamic> json) {
+    value0 = json['name'];
+    value1 = json['actualPrice'].toStringAsFixed(2);
+    value2 = json['category'];
+    value3 = json['madeIn'];
+  }
+  ShowObject.fromJsonWorker(Map<String, dynamic> json) {
+    value0 = json['name'];
+    value1 = json['address'];
+    value2 = json['phoneNumber'];
+    value3 = json['email'];
+  } //"name", "address", "Email", "Phone", "address"
+  ShowObject.fromJsonSupplier(Map<String, dynamic> json) {
+    value0 = json['name'];
+    value1 = json['address'];
+    value2 = json['phoneNumber'];
+    value3 = json['email'];
+  }
+  ShowObject.fromJsonDepot(Map<String, dynamic> json) {
+    value0 = json['name'];
+    value1 = json['address'];
+    value2 = json['capacity'].toString();
+    value3 = json['availableCapacity'].toString();
+  }
+  //from json to Worker
+  Map<String, dynamic> toJson() {
+    final _data = <String, dynamic>{};
+    _data['value0'] = value0;
+    _data['value1'] = value1;
+
+    _data['value2'] = value2;
+    _data['value3'] = value3;
+
+    return _data;
+  }
+}

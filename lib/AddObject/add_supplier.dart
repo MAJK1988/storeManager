@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -22,8 +24,15 @@ class AddSupplier extends StatefulWidget {
 
 class _AddSupplierState extends State<AddSupplier> {
   TextEditingController registerDate = TextEditingController(),
-      startDate = TextEditingController(),
-      endDate = TextEditingController();
+      startDateControl = TextEditingController(),
+      endDateControl = TextEditingController(),
+      nameControl = TextEditingController(),
+      phoneControl = TextEditingController(),
+      emailControl = TextEditingController(),
+      addressControl = TextEditingController(),
+      salaryControl = TextEditingController(),
+      positionControl = TextEditingController(); //Salary and position
+
   late String tag = "AddSupplier";
   final _formKey = GlobalKey<FormState>();
   @override
@@ -37,7 +46,11 @@ class _AddSupplierState extends State<AddSupplier> {
       name = "",
       phoneNumber = "",
       email = "",
-      address = "";
+      address = "",
+      startDate = "",
+      endDate = "";
+  late double salary = 0;
+  int status = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,6 +89,7 @@ class _AddSupplierState extends State<AddSupplier> {
                       ),
                       Flexible(
                         child: inputElementTextFormField(
+                            controller: nameControl,
                             padding: padding,
                             icon: Icons.edit_note,
                             hintText: AppLocalizations.of(context)!.name_text,
@@ -98,6 +112,7 @@ class _AddSupplierState extends State<AddSupplier> {
                     children: <Widget>[
                       Flexible(
                         child: inputElementTextFormField(
+                            controller: phoneControl,
                             padding: padding,
                             textInputType: TextInputType.phone,
                             icon: Icons.phone,
@@ -111,6 +126,7 @@ class _AddSupplierState extends State<AddSupplier> {
                       ),
                       Flexible(
                         child: inputElementTextFormField(
+                            controller: emailControl,
                             padding: padding,
                             textInputType: TextInputType.emailAddress,
                             icon: Icons.email,
@@ -129,6 +145,7 @@ class _AddSupplierState extends State<AddSupplier> {
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: inputElementTextFormField(
+                      controller: addressControl,
                       padding: padding,
                       icon: Icons.location_on,
                       hintText: AppLocalizations.of(context)!.address_text,
@@ -149,7 +166,7 @@ class _AddSupplierState extends State<AddSupplier> {
                       children: <Widget>[
                         Flexible(
                           child: inputElementDateFormField(
-                              controller: startDate,
+                              controller: startDateControl,
                               padding: padding,
                               context: context,
                               icon: Icons.date_range,
@@ -157,18 +174,31 @@ class _AddSupplierState extends State<AddSupplier> {
                                   AppLocalizations.of(context)!.start_time_text,
                               labelText:
                                   AppLocalizations.of(context)!.start_time,
-                              onChanged: ((value) {})),
+                              onChanged: ((value) {
+                                Log(tag: tag, message: "start time: $value");
+                                setState(() {
+                                  startDateControl.text = value!;
+                                  startDate = value;
+                                });
+                              })),
                         ),
                         Flexible(
                           child: inputElementDateFormField(
-                              controller: endDate,
+                              hasValidate: false,
+                              controller: endDateControl,
                               padding: padding,
                               context: context,
                               icon: Icons.date_range,
                               hintText:
                                   AppLocalizations.of(context)!.end_time_text,
                               labelText: AppLocalizations.of(context)!.end_time,
-                              onChanged: ((value) {})),
+                              onChanged: ((value) {
+                                Log(tag: tag, message: "end time: $value");
+                                setState(() {
+                                  endDateControl.text = value!;
+                                  endDate = value;
+                                });
+                              })),
                         ),
                       ],
                     ),
@@ -184,13 +214,19 @@ class _AddSupplierState extends State<AddSupplier> {
                       children: <Widget>[
                         Flexible(
                           child: inputElementTextFormField(
+                              controller: salaryControl,
                               padding: padding,
                               textInputType: TextInputType.number,
                               icon: Icons.money_sharp,
                               hintText:
                                   AppLocalizations.of(context)!.salary_text,
                               labelText: AppLocalizations.of(context)!.salary,
-                              onChanged: ((value) {})),
+                              onChanged: ((value) {
+                                Log(tag: tag, message: "salary: $value");
+                                setState(() {
+                                  salary = double.parse(value!);
+                                });
+                              })),
                         ),
                         Padding(
                           padding: EdgeInsets.only(right: 2 * padding),
@@ -198,7 +234,7 @@ class _AddSupplierState extends State<AddSupplier> {
                         ),
                         Flexible(
                           child: DropdownButton<String>(
-                            value: "one",
+                            value: "1",
                             icon: const Icon(Icons.arrow_downward),
                             elevation: 16,
                             style: const TextStyle(color: Colors.deepPurple),
@@ -208,9 +244,11 @@ class _AddSupplierState extends State<AddSupplier> {
                             ),
                             onChanged: (String? value) {
                               // This is called when the user selects an item.
-                              setState(() {});
+                              setState(() {
+                                status = int.parse(value!);
+                              });
                             },
-                            items: ["one", "two", "three"]
+                            items: ["1", "2", "3"]
                                 .map<DropdownMenuItem<String>>((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
@@ -266,10 +304,79 @@ class _AddSupplierState extends State<AddSupplier> {
                                   billId: "");
                               int result = await DBProvider.db.addNewSupplier(
                                   outSidePerson: supplier, type: supplier.type);
+
                               Log(
                                   tag: tag,
                                   message:
                                       "add supplier to Database result: $result");
+                              setState(() {
+                                addressControl.text = "";
+                                emailControl.text = "";
+                                phoneControl.text = "";
+                                startDateControl.text = "";
+                                endDateControl.text = "";
+                                registerDate.text = "";
+                                nameControl.text = "";
+                              });
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(SnackBar(
+                                      content: Text(
+                                // ignore: use_build_context_synchronously
+                                AppLocalizations.of(context)!.object_add,
+                              )));
+                            } else {
+                              Log(
+                                  tag: tag,
+                                  message: "Item is exist in dataBase");
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(SnackBar(
+                                      content: Text(
+                                // ignore: use_build_context_synchronously
+                                AppLocalizations.of(context)!.object_exist,
+                              )));
+                            }
+                          } else {
+                            bool hasEmail = await DBProvider.db.tableHasObject(
+                                element: "email",
+                                searchFor: email,
+                                tableName: workerTableName);
+                            bool hasPhoneNumber = await DBProvider.db
+                                .tableHasObject(
+                                    element: "phoneNumber",
+                                    searchFor: phoneNumber,
+                                    tableName: workerTableName);
+                            if (!(hasPhoneNumber || hasEmail)) {
+                              Worker worker = Worker(
+                                  Id: 0,
+                                  name: name,
+                                  address: address,
+                                  phoneNumber: phoneNumber,
+                                  email: email,
+                                  startTime: startDate,
+                                  endTime: endDate,
+                                  status: status,
+                                  salary: salary);
+                              int result = await DBProvider.db
+                                  .addNewWorker(worker: worker);
+
+                              Log(
+                                  tag: tag,
+                                  message:
+                                      "add worker to Database result: $result");
+                              setState(() {
+                                addressControl.text = "";
+                                emailControl.text = "";
+                                phoneControl.text = "";
+                                startDateControl.text = "";
+                                endDateControl.text = "";
+                                registerDate.text = "";
+                                nameControl.text = "";
+                                startDateControl.text = "";
+                                endDateControl.text = "";
+                                salaryControl.text = "";
+                              });
                               // ignore: use_build_context_synchronously
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(SnackBar(
@@ -300,7 +407,7 @@ class _AddSupplierState extends State<AddSupplier> {
                         // Function that add depot to dataBase
                         //addDepotToDatabase(depotNumber: 3);
                         // Function that add 300 item
-                        //addItemToDatabase(itemNumber: 300);
+                        addItemToDatabase(itemNumber: 300);
 
                         /*List<Item> items = await DBProvider.db.getAllItems();
                         for (Item item in items) {
@@ -342,7 +449,7 @@ class _AddSupplierState extends State<AddSupplier> {
                           }
                         }*/
                         /*DBProvider.db.deleteTable(tableName: itemTableName);
-                         DBProvider.db.deleteTable(tableName: supplierTableName);
+                        DBProvider.db.deleteTable(tableName: supplierTableName);
                         DBProvider.db.deleteTable(tableName: depotTableName);*/
                       },
                       child: Text(

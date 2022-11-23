@@ -20,6 +20,15 @@
     "@add_item": {
       "description": "A programmer greeting"
     },
+    "item": "Item",
+    "@tem": {
+      "description": "A programmer greeting"
+    },
+    "production_date": "Production Date",
+    "@production_date": {
+      "description": "A programmer greeting"
+    },
+  
     "home_page": "Home page",
     "@home_page": {
       "description": "A programmer greeting"
@@ -215,6 +224,19 @@
     },
     "win_text": "Please select the win",
     "@win_text": {
+      "description": "A programmer greeting"},
+    "capacity": "capacity",
+    "@win": {
+      "description": "A programmer greeting"
+    },
+    "capacity_text": "Please select the capacity",
+    "@win_text": {
+      "description": "A programmer greeting"},
+      "add_depot":"add Depot",
+      "@add_depot": {
+      "description": "A programmer greeting"},
+      "depot":"Depot",
+      "@depot": {
       "description": "A programmer greeting"}
     
     

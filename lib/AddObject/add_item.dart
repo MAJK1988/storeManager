@@ -409,6 +409,7 @@ class _AddItemState extends State<AddItem> {
                                 actualWin: win,
                                 supplierID: " ",
                                 customerID: " ",
+                                depotID: " ",
                                 count: 0);
                             int result =
                                 await DBProvider.db.addNewItem(item: item);

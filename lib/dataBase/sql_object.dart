@@ -174,8 +174,8 @@ class DBProvider {
     Log(tag: "Index is: ", message: id.toString());
 
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,name,barCode, category,description,soldBy, madeIn,prices,validityPeriod, volume,actualPrice,actualWin, supplierID,customerID,count )"
-        " VALUES (?,?,? ,?,?,? ,?,?,? ,?,?,?, ?,?,?)",
+        "INSERT Into $tableName (id,name,barCode, category,description,soldBy, madeIn,prices,validityPeriod, volume,actualPrice,actualWin, supplierID,customerID,depotID,count )"
+        " VALUES (?,?,? ,?,?,? ,?,?,? ,?,?,?, ?,?,?,?)",
         [
           id,
           item.name,
@@ -193,13 +193,71 @@ class DBProvider {
           item.actualPrice,
           item.actualWin,
           //
-          "supplierID$id",
           "customerID$id",
+          "supplierID$id",
+          "depotID$id",
           item.count
         ]);
     return raw;
   }
 
+  addNewItemDepot(
+      {required ItemDepot itemDepot, required String tableName}) async {
+    // table related to item
+    Log(tag: "addNewItemDepot", message: "Activate Function");
+    final db = await database;
+    //get the biggest id in the table
+    List<Map<String, Object?>> table;
+
+    bool tableExist = await checkExistTable(tableName: tableName, db: db);
+    if (tableExist) {
+      table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
+    } else {
+      Log(
+          tag: "addNewItemDepot",
+          message: "table not exist, Try to create table");
+      await creatTable(tableName, itemDepot.createSqlTable());
+      addNewItemDepot(itemDepot: itemDepot, tableName: tableName);
+      return -1;
+    }
+    var raw = await db.rawInsert(
+        /*late final int number;
+  late final int depotId;*/
+        "INSERT Into $tableName (depotId,number )"
+        " VALUES (?,?)",
+        [itemDepot.depotId, itemDepot.number]);
+    return raw;
+  }
+
+  addNewItemSupplier(
+      {required ItemSupplier itemSupplier, required String tableName}) async {
+    // table related to item
+    Log(tag: "addNewItemSupplier", message: "Activate Function");
+    final db = await database;
+    //get the biggest id in the table
+    List<Map<String, Object?>> table;
+
+    bool tableExist = await checkExistTable(tableName: tableName, db: db);
+    if (tableExist) {
+      table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
+    } else {
+      Log(
+          tag: "addNewItemSupplier",
+          message: "table not exist, Try to create table");
+      await creatTable(tableName, itemSupplier.createSqlTable());
+      addNewItemSupplier(itemSupplier: itemSupplier, tableName: tableName);
+      return -1;
+    }
+    var raw = await db.rawInsert(
+        /*late final int number;
+  late final int depotId;*/
+        "INSERT Into $tableName (supplier )"
+        " VALUES (?)",
+        [itemSupplier.supplier]);
+    return raw;
+  }
+
+/**Depot */
   addNewDepot({required Depot depot}) async {
     Log(tag: "addNewItem", message: "Activate Function");
     String tableName = depotTableName;
@@ -273,20 +331,19 @@ class DBProvider {
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,itemId,storageDate, number,billId,productDate, price)"
-        " VALUES (?,?,? ,?,?,? ,? )",
+        "INSERT Into $tableName (id,itemId,itemBillId, number,billId)"
+        " VALUES (?,?,? ,?,?)",
         [
           id,
           itemsDepot.itemId,
-          itemsDepot.storageDate,
+          itemsDepot.itemBillId,
           itemsDepot.number,
           itemsDepot.billId,
-          itemsDepot.productDate,
-          itemsDepot.price
         ]);
     return raw;
   }
 
+/**$$$$$$ */
   addNewBillItem(
       {required ItemBill itemBill, required String tableName}) async {
     Log(tag: "addNewItem", message: "Activate Function");
