@@ -1,10 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
+import '../dataBase/item_sql.dart';
 import '../dataBase/sql_object.dart';
+import '../utils/image_pros.dart';
 import '../utils/objects.dart';
 import '../utils/utils.dart';
+import 'dart:io';
+import 'dart:async';
 
 class AddItem extends StatefulWidget {
   const AddItem({super.key});
@@ -82,6 +90,8 @@ class _AddItemState extends State<AddItem> {
       category = '',
       soldBy = '';
   late double validityPeriod = 0.0, volume = 0.0, price = 0.0, win = 0.0;
+  File? image;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +109,16 @@ class _AddItemState extends State<AddItem> {
               //crossAxisAlignment: CrossAxisAlignment.stretch,
               //crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                //Image
+                Padding(
+                    padding: EdgeInsets.only(
+                        right: padding, left: padding, bottom: padding),
+                    child: IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setImage();
+                      },
+                    )),
                 // name and code bar
                 Padding(
                   padding: EdgeInsets.only(
@@ -395,24 +415,25 @@ class _AddItemState extends State<AddItem> {
                           Log(tag: tag, message: "table items has name: $name");
                           if (!hasCodeBar) {
                             Item item = Item(
-                                ID: 0,
-                                name: name,
-                                soldBy: soldBy,
-                                madeIn: madeIn,
-                                barCode: codeBar,
-                                category: category,
-                                description: description,
-                                prices: " ",
-                                validityPeriod: validityPeriod,
-                                volume: volume,
-                                actualPrice: price,
-                                actualWin: win,
-                                supplierID: " ",
-                                customerID: " ",
-                                depotID: " ",
-                                count: 0);
-                            int result =
-                                await DBProvider.db.addNewItem(item: item);
+                              ID: 0,
+                              name: name,
+                              soldBy: soldBy,
+                              madeIn: madeIn,
+                              barCode: codeBar,
+                              category: category,
+                              description: description,
+                              prices: " ",
+                              validityPeriod: validityPeriod,
+                              volume: volume,
+                              actualPrice: price,
+                              actualWin: win,
+                              supplierID: " ",
+                              customerID: " ",
+                              depotID: " ",
+                              count: 0,
+                              // image: ""
+                            );
+                            int result = addNewItem(item: item);
                             Log(
                                 tag: tag,
                                 message: "addItemToDatabase result: $result");

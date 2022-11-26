@@ -6,6 +6,7 @@ import 'package:store_manager/utils/objects.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
 
+import '../dataBase/item_sql.dart';
 import '../dataBase/sql_object.dart';
 
 late double padding = 16;
@@ -290,25 +291,26 @@ addItemToDatabase({required int itemNumber}) async {
   int status = (Random().nextInt(4) + 1);
   for (int i = 0; i < itemNumber; i++) {
     Item item = Item(
-        ID: 0,
-        name: "name$i",
-        soldBy: ((Random().nextInt(35) + 1) > 16) ? "Kg" : "unit",
-        madeIn: ((Random().nextInt(35) + 1) > 16) ? "China" : "France",
-        barCode:
-            (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
-        category: (Random().nextInt(29) + 1).toString(),
-        description: "description$i",
-        prices: "prices$i",
-        actualPrice: Random().nextDouble() * (20 - 0.1) + 0.1,
-        actualWin: Random().nextDouble() * (0.2 - 0.1) + 0.1,
-        validityPeriod: (Random().nextInt(35) + 1),
-        volume: Random().nextDouble() * (0.5 - 0.1) + 0.1,
-        supplierID: "supplierID$i",
-        customerID: "customerID$i",
-        depotID: "depotID$i",
-        count: 0);
+      ID: 0,
+      name: "name$i",
+      soldBy: ((Random().nextInt(35) + 1) > 16) ? "Kg" : "unit",
+      madeIn: ((Random().nextInt(35) + 1) > 16) ? "China" : "France",
+      barCode: (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
+      category: (Random().nextInt(29) + 1).toString(),
+      description: "description$i",
+      prices: "prices$i",
+      actualPrice: Random().nextDouble() * (20 - 0.1) + 0.1,
+      actualWin: Random().nextDouble() * (0.2 - 0.1) + 0.1,
+      validityPeriod: (Random().nextInt(35) + 1),
+      volume: Random().nextDouble() * (0.5 - 0.1) + 0.1,
+      supplierID: "supplierID$i",
+      customerID: "customerID$i",
+      depotID: "depotID$i",
+      count: 0,
+      //image: ""
+    );
 
-    int result = await DBProvider.db.addNewItem(item: item);
+    int result = await addNewItem(item: item);
     Log(tag: " addItemToDatabase", message: "$result");
   }
 }

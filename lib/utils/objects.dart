@@ -59,10 +59,10 @@ class ItemBill {
 class Bill {
   late final int ID;
   late final String depotId;
-  late final DateTime dateTime;
-  late final String outsidePersonId;
-  late final int type;
-  late final String workerId;
+  late final String dateTime;
+  late final int outsidePersonId;
+  late final String type;
+  late final int workerId;
   late final String itemBills; //name of table
   Bill(
       {required this.ID,
@@ -98,13 +98,13 @@ class Bill {
 
   // Create sql table
   String createSqlTable() {
-    return "CREATE TABLE Bill ("
-        "ID INTEGER NOT NULL PRIMARY KEY,"
+    return "CREATE TABLE $BillInTableName ("
+        "id INTEGER NOT NULL PRIMARY KEY,"
         "depotId INTEGER NOT NULL,"
         "dateTime DATE,"
-        "outsidePersonId TEXT,"
+        "outsidePersonId INTEGER,"
         "type TEXT,"
-        "workerId TEXT,"
+        "workerId INTEGER,"
         "itemBills TEXT NOT NULL UNIQUE"
         ")";
   }
@@ -137,7 +137,8 @@ const String supplierType = "Supplier",
     supplierTableName = "SuppliersTable",
     workerTableName = "WorkersTable",
     depotTableName = "DepotsTable",
-    itemTableName = "ItemsTableDSC";
+    BillInTableName = "BillInTableName",
+    itemTableName = "ItemsTableDSC1";
 
 class Supplier {
   // outSidePerson has twÒo types: Supplier, Customer
@@ -187,6 +188,19 @@ class Supplier {
     _data['itemId'] = itemId;
     _data['billId'] = billId;
     return _data;
+  }
+
+  Supplier init() {
+    return Supplier(
+        Id: -1,
+        registerTime: "",
+        name: "",
+        address: "",
+        phoneNumber: "",
+        email: "",
+        type: "",
+        itemId: "",
+        billId: "");
   }
 
   // Create sql table
@@ -251,36 +265,39 @@ class Item {
   late final String soldBy;
 
   late final String madeIn;
-  late final String prices; // name of table,  table has change of item price
-  late final double validityPeriod;
+  late String prices; // name of table,  table has change of item price&win
+  late double validityPeriod;
 
   late final double volume;
-  late final double actualPrice;
-  late final double actualWin;
+  late double actualPrice;
+  late double actualWin;
   late final String
       supplierID; // name of table, row table has id of item supplier
   late final String
       customerID; // name of table, row table has id of item customer
   late final String depotID; // name of table, row table has id of item customer
-  late final int count;
+  late double count;
+  //late String image;
 
-  Item(
-      {required this.ID,
-      required this.name,
-      required this.barCode,
-      required this.category,
-      required this.description,
-      required this.soldBy,
-      required this.madeIn,
-      required this.prices,
-      required this.validityPeriod,
-      required this.volume,
-      required this.actualPrice,
-      required this.actualWin,
-      required this.supplierID,
-      required this.customerID,
-      required this.depotID,
-      required this.count});
+  Item({
+    required this.ID,
+    required this.name,
+    required this.barCode,
+    required this.category,
+    required this.description,
+    required this.soldBy,
+    required this.madeIn,
+    required this.prices,
+    required this.validityPeriod,
+    required this.volume,
+    required this.actualPrice,
+    required this.actualWin,
+    required this.supplierID,
+    required this.customerID,
+    required this.depotID,
+    required this.count,
+    // required this.image
+  });
 
   // read BillIn from json object
   Item.fromJson(Map<String, dynamic> json) {
@@ -303,6 +320,7 @@ class Item {
     customerID = json['customerID'];
     depotID = json['depotID'];
     count = json['count'];
+    //image = json['image'];
   }
   //from json to ItemBillIn BillIn
   Map<String, dynamic> toJson() {
@@ -326,6 +344,7 @@ class Item {
     _data['customerID'] = customerID;
     _data['depotID'] = depotID;
     _data['count'] = count;
+    // _data['image'] = image;
 
     return _data;
   }
@@ -349,36 +368,41 @@ class Item {
         "supplierID TEXT NOT NULL UNIQUE,"
         "customerID TEXT NOT NULL UNIQUE,"
         "depotID TEXT NOT NULL UNIQUE,"
-        "count INT"
+        "count REAL"
+        // "image TEXT"
         ")";
   }
 }
 
 class ItemDepot {
   //table name: ItemDepot$idItem
-  late final int number;
+  late double number;
   late final int depotId;
   ItemDepot({required this.number, required this.depotId});
 
   // read BillIn from json object
   ItemDepot.fromJson(Map<String, dynamic> json) {
     number = json['number'];
-    depotId = json['depotId'];
+    depotId = json['id'];
   }
+  updateNumber({required newNumber}) {
+    number = newNumber;
+  }
+
   //from json to ItemBillIn BillIn
   Map<String, dynamic> toJson() {
     final _data = <String, dynamic>{};
     _data['number'] = number;
-    _data['depotId'] = depotId;
+    _data['id'] = depotId;
 
     return _data;
   }
 
   // Create sql table
-  String createSqlTable() {
-    return "CREATE TABLE Bill ("
-        "depotId INTEGER NOT NULL PRIMARY KEY,"
-        "number INTEGER NOT NULL"
+  String createSqlTable({required String tableName}) {
+    return "CREATE TABLE $tableName ("
+        "id INTEGER NOT NULL PRIMARY KEY,"
+        "number REAL NOT NULL"
         ")";
   }
 }
@@ -390,20 +414,20 @@ class ItemSupplier {
 
   // read BillIn from json object
   ItemSupplier.fromJson(Map<String, dynamic> json) {
-    supplier = json['supplier'];
+    supplier = json['id'];
   }
   //from json to ItemBillIn BillIn
   Map<String, dynamic> toJson() {
     final _data = <String, dynamic>{};
-    _data['supplier'] = supplier;
+    _data['id'] = supplier;
 
     return _data;
   }
 
   // Create sql table
-  String createSqlTable() {
-    return "CREATE TABLE Bill ("
-        "supplier INTEGER NOT NULL PRIMARY KEY"
+  String createSqlTable({required String tableName}) {
+    return "CREATE TABLE $tableName ("
+        "id INTEGER NOT NULL PRIMARY KEY"
         ")";
   }
 }
@@ -477,6 +501,19 @@ class Worker {
     return _data;
   }
 
+  Worker init() {
+    return Worker(
+        Id: -1,
+        name: "",
+        address: "",
+        phoneNumber: "",
+        email: "",
+        startTime: "",
+        endTime: "",
+        status: 0,
+        salary: 0);
+  }
+
   // Create sql table
   String createSqlTable() {
     return "CREATE TABLE $workerTableName ("
@@ -539,6 +576,17 @@ class Depot {
     return _data;
   }
 
+  Depot init() {
+    return Depot(
+        Id: -1,
+        address: "",
+        name: "",
+        capacity: 0,
+        availableCapacity: 0,
+        billsID: "",
+        depotListItem: "");
+  }
+
   // Create sql table
   String createSqlTable() {
     return "CREATE TABLE $depotTableName ("
@@ -556,25 +604,29 @@ class Depot {
 class ItemsDepot {
   late final int id;
   late final int itemId;
-  late final int number;
+  late final double number;
 
   late final int billId;
   late final int itemBillId;
+  late final String itemBillIdOut;
 
   ItemsDepot(
       {required this.id,
       required this.itemId,
       required this.itemBillId,
       required this.number,
-      required this.billId});
+      required this.billId,
+      required this.itemBillIdOut});
 
   // read ItemsDepot from json object
   ItemsDepot.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     itemId = json['itemId'];
     itemBillId = json['itemBillId'];
+
     number = json['number'];
     billId = json['billId'];
+    itemBillIdOut = json['itemBillIdOut'];
   }
   //from json to ItemsDepot
   Map<String, dynamic> toJson() {
@@ -582,8 +634,10 @@ class ItemsDepot {
     _data['id'] = id;
     _data['itemId'] = itemId;
     _data['itemBillId'] = itemBillId;
+
     _data['number'] = number;
     _data['billId'] = billId;
+    _data['itemBillIdOut'] = itemBillIdOut;
     return _data;
   }
 
@@ -594,7 +648,8 @@ class ItemsDepot {
         "itemId INTEGER,"
         "itemBillId INTEGER,"
         "number INTEGER,"
-        "billId INTEGER"
+        "billId INTEGER,"
+        "itemBillIdOut TEXT"
         ")";
   }
 }

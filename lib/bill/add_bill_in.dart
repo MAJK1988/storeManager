@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../dataBase/bill_in_sql.dart';
 import '../dataBase/sql_object.dart';
 import '../utils/drop_down_button_new.dart';
 import '../utils/objects.dart';
@@ -17,15 +18,15 @@ class AddBillIn extends StatefulWidget {
 
 class _AddBillInState extends State<AddBillIn> {
   TextEditingController dateController = TextEditingController(),
-      billInController = TextEditingController(),
+      billInDateController = TextEditingController(),
       itemController = TextEditingController(),
       numberController = TextEditingController(),
       depotController = TextEditingController(),
-      priceController = TextEditingController(),
       supplierController = TextEditingController(),
       workerController = TextEditingController();
   final GlobalKey _widgetKey = GlobalKey();
   late double totalPrice = 0.0;
+  late double price = 0.0;
   final _formKey = GlobalKey<FormState>();
 
   final List<String> names = <String>[
@@ -41,25 +42,12 @@ class _AddBillInState extends State<AddBillIn> {
   final List<int> msgCount = <int>[2, 0, 10, 6, 52, 4, 0, 2];
   late final List<ItemBill> itemBillIns = [];
   late Item selectedItem;
-  late Depot selectedDepot;
-  late Supplier selectedSupplier;
-  late Worker selectedWorker;
+  late Depot selectedDepot = selectedDepot.init();
+  late Supplier selectedSupplier = selectedSupplier.init();
+  late Worker selectedWorker = selectedWorker.init();
   late String productionDate;
   late double itemNumber;
   late double toTalPrice = 0.0;
-
-  void addItemBillIns() {
-    setState(() {
-      itemBillIns.add(ItemBill(
-          id: 0,
-          IDItem: itemBillIns.last.IDItem + 1,
-          productDate: "barCode",
-          number: 3,
-          win: 0.2,
-          price: 4.02,
-          depotID: -1));
-    });
-  }
 
   late List<Item> listItems = [];
   late List<Item> listSelectedItems = [];
@@ -160,7 +148,7 @@ class _AddBillInState extends State<AddBillIn> {
                                 Expanded(
                                   flex: 1,
                                   child: inputElementDateFormField(
-                                      controller: billInController,
+                                      controller: billInDateController,
                                       context: context,
                                       padding: padding,
                                       icon: Icons.date_range,
@@ -170,7 +158,7 @@ class _AddBillInState extends State<AddBillIn> {
                                           AppLocalizations.of(context)!.date,
                                       onChanged: ((value) {
                                         setState(() {
-                                          billInController.text = value!;
+                                          billInDateController.text = value!;
                                         });
                                       })),
                                 ),
@@ -358,14 +346,8 @@ class _AddBillInState extends State<AddBillIn> {
                                                 controller: numberController,
                                                 onChang: (value) {
                                                   if (double.tryParse(value!) !=
-                                                          null &&
-                                                      priceController
-                                                          .text.isNotEmpty) {
+                                                      null) {
                                                     setState(() {
-                                                      double price =
-                                                          double.parse(
-                                                              priceController
-                                                                  .text);
                                                       double number =
                                                           double.parse(value);
                                                       totalPrice =
@@ -396,13 +378,17 @@ class _AddBillInState extends State<AddBillIn> {
                                       ),
                                       //price
                                       Card(
-                                        child: TableCell(
-                                            child: inputElementTable(
-                                                controller: priceController,
-                                                onChang: (value) {},
-                                                context: context,
-                                                textInputType:
-                                                    TextInputType.number)),
+                                        child: Center(
+                                          child: TableCell(
+                                              child: Padding(
+                                            padding: EdgeInsets.all(padding),
+                                            child: Text(
+                                              '${price.toStringAsFixed(2)} \$',
+                                              style:
+                                                  const TextStyle(fontSize: 18),
+                                            ),
+                                          )),
+                                        ),
                                       ),
                                       //Depot
                                       Card(
@@ -496,28 +482,30 @@ class _AddBillInState extends State<AddBillIn> {
                                                                       2)));
 
                                                       selectedItem = Item(
-                                                          ID: -2,
-                                                          name: "",
-                                                          barCode: "",
-                                                          category: "",
-                                                          description: "",
-                                                          soldBy: "",
-                                                          madeIn: "",
-                                                          prices: "",
-                                                          validityPeriod: 0.0,
-                                                          volume: 0.0,
-                                                          actualPrice: 0.0,
-                                                          actualWin: 0.0,
-                                                          supplierID: "",
-                                                          customerID: "",
-                                                          depotID: "",
-                                                          count: 0);
+                                                        ID: -2,
+                                                        name: "",
+                                                        barCode: "",
+                                                        category: "",
+                                                        description: "",
+                                                        soldBy: "",
+                                                        madeIn: "",
+                                                        prices: "",
+                                                        validityPeriod: 0.0,
+                                                        volume: 0.0,
+                                                        actualPrice: 0.0,
+                                                        actualWin: 0.0,
+                                                        supplierID: "",
+                                                        customerID: "",
+                                                        depotID: "",
+                                                        count: 0,
+                                                        // image: ""
+                                                      );
                                                     });
                                                     itemController.text = "";
                                                     dateController.text = "";
                                                     numberController.text = "";
                                                     depotController.text = "";
-                                                    priceController.text = "";
+                                                    price = 0.0;
                                                     dateController.text = "";
                                                     totalPrice = 0.0;
                                                     Log(
@@ -598,7 +586,44 @@ class _AddBillInState extends State<AddBillIn> {
                                     color: Colors.blue,
                                   ),
                                   hoverColor: Colors.blue.shade50,
-                                  onPressed: () {}),
+                                  onPressed: () async {
+                                    Log(tag: tag, message: "Start bill save");
+                                    if (listSelectedItems.isNotEmpty &&
+                                        selectedSupplier.Id != -1 &&
+                                        selectedDepot.Id != -1 &&
+                                        billInDateController.text.isNotEmpty &&
+                                        listDepot.isNotEmpty &&
+                                        listShowObjectMainTable.isNotEmpty) {
+                                      Bill bill = Bill(
+                                          ID: 0,
+                                          depotId: "",
+                                          dateTime: billInDateController.text
+                                              .toString(),
+                                          outsidePersonId: selectedSupplier.Id,
+                                          type: "out",
+                                          workerId: selectedWorker.Id,
+                                          itemBills: "");
+                                      await addNewBillIn(
+                                          bill: bill,
+                                          listItemBill: itemBillIns);
+                                      setState(() {
+                                        itemBillIns.clear();
+                                        listShowObjectMainTable.clear();
+                                        selectedSupplier =
+                                            selectedSupplier.init();
+                                        selectedWorker = selectedWorker.init();
+                                        dateController.text = "";
+                                        toTalPrice = 0.0;
+                                        supplierController.text = "";
+                                        workerController.text = "";
+                                        billInDateController.text = "";
+                                      });
+
+                                      Log(
+                                          tag: tag,
+                                          message: "Item list isn't null");
+                                    }
+                                  }),
                             ],
                           ),
                         ),
@@ -911,9 +936,7 @@ class _AddBillInState extends State<AddBillIn> {
                                       if (tableName == itemTableName) {
                                         itemController.text =
                                             listShowObject[index].value0;
-                                        priceController.text = listItems[index]
-                                            .actualPrice
-                                            .toStringAsFixed(2);
+                                        price = listItems[index].actualPrice;
                                         selectedItem = listItems[index];
                                       } else if (tableName == workerTableName) {
                                         workerController.text =
