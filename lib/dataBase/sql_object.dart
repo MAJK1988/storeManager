@@ -34,6 +34,12 @@ class DBProvider {
         onCreate: (Database db, int version) {});
   }
 
+  Future<void> deleteDatabase() async {
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, _databaseName);
+    databaseFactory.deleteDatabase(path);
+  }
+
   Future creatTable(String tableName, String query) async {
     int count = -1;
     Database db = await database;
@@ -65,7 +71,7 @@ class DBProvider {
     final db = await database;
     //get the biggest id in the table
     var table;
-    bool tableExist = await checkExistTable(tableName: tableName, db: db);
+    bool tableExist = await checkExistTable(tableName: tableName);
     if (tableExist) {
       table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
     } else {
@@ -109,7 +115,7 @@ class DBProvider {
     //get the biggest id in the table
     List<Map<String, Object?>> table;
 
-    bool tableExist = await checkExistTable(tableName: workerTableName, db: db);
+    bool tableExist = await checkExistTable(tableName: workerTableName);
     if (tableExist) {
       table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $workerTableName");
     } else {
@@ -155,7 +161,7 @@ class DBProvider {
     //get the biggest id in the table
     List<Map<String, Object?>> table;
 
-    bool tableExist = await checkExistTable(tableName: tableName, db: db);
+    bool tableExist = await checkExistTable(tableName: tableName);
     if (tableExist) {
       table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
     } else {
@@ -200,7 +206,7 @@ class DBProvider {
     //get the biggest id in the table
     List<Map<String, Object?>> table;
 
-    bool tableExist = await checkExistTable(tableName: tableName, db: db);
+    bool tableExist = await checkExistTable(tableName: tableName);
     if (tableExist) {
       table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
     } else {
@@ -239,8 +245,8 @@ class DBProvider {
 
   /*** */
 
-  Future<bool> checkExistTable(
-      {required String tableName, required Database db}) async {
+  Future<bool> checkExistTable({required String tableName}) async {
+    final db = await database;
     String checkExistTable =
         "SELECT * FROM sqlite_master WHERE name ='$tableName' and type='table'";
     var checkExist = await db.rawQuery(checkExistTable);
@@ -253,10 +259,10 @@ class DBProvider {
   // function used to  delete table data
   deleteTable({required String tableName}) async {
     final db = await database;
-    bool tableExist = await checkExistTable(tableName: tableName, db: db);
+    bool tableExist = await checkExistTable(tableName: tableName);
     if (tableExist) {
       db.rawQuery("DELETE FROM $tableName");
-      tableExist = await checkExistTable(tableName: tableName, db: db);
+      tableExist = await checkExistTable(tableName: tableName);
       Log(
           tag: "deleteTable",
           message: "table $tableName is exist: $tableExist");
@@ -269,16 +275,26 @@ class DBProvider {
       {required var v, required String tableName, required int id}) async {
     // updateObject is a function that used to update an item in a table "tableName"
     final db = await database;
-    var res = await db
-        .update(tableName, v.toJson(), where: "id = ?", whereArgs: [id]);
-    return res;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      var res = await db
+          .update(tableName, v.toJson(), where: "id = ?", whereArgs: [id]);
+      return res;
+    } else {
+      return 0;
+    }
   }
 
   deleteObject({required String tableName, required int id}) async {
     // updateObject is a function that used to delete an item in a table "tableName"
     final db = await database;
-    var res = await db.delete(tableName, where: "id = ?", whereArgs: [id]);
-    return res;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      var res = await db.delete(tableName, where: "id = ?", whereArgs: [id]);
+      return res;
+    } else {
+      return 0;
+    }
   }
 
   tableSearchName(
@@ -287,11 +303,16 @@ class DBProvider {
       required String element}) async {
     // search if the name is exist in table
     final db = await database;
-    String checkExistName =
-        "SELECT * FROM $tableName WHERE $element LIKE '%$elementSearch%'";
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      String checkExistName =
+          "SELECT * FROM $tableName WHERE $element LIKE '%$elementSearch%'";
 
-    var res = await db.rawQuery(checkExistName);
-    return res;
+      var res = await db.rawQuery(checkExistName);
+      return res;
+    } else {
+      return [];
+    }
   }
 
   tableSortBy(
@@ -300,10 +321,15 @@ class DBProvider {
       String order = "DESC"}) async {
     // sort table  by element (date)
     final db = await database;
-    String checkExistName =
-        "SELECT * FROM $tableName ORDER BY $element $order"; //DESC ASC
-    var res = await db.rawQuery(checkExistName);
-    return res;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      String checkExistName =
+          "SELECT * FROM $tableName ORDER BY $element $order"; //DESC ASC
+      var res = await db.rawQuery(checkExistName);
+      return res;
+    } else {
+      return [];
+    }
   }
 
   //SELECT * FROM $tableName WHERE $element <= '2016-03-09' AND $element >= '2019-08-11'
@@ -312,19 +338,89 @@ class DBProvider {
       {required String tableName, required String element}) async {
     // sort table  by element (date)
     final db = await database;
-    String checkExistName =
-        "SELECT * FROM $tableName WHERE $element <= '2019-08-11' AND $element >= '2016-03-09'";
-    var res = await db.rawQuery(checkExistName);
-    return res;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      String checkExistName =
+          "SELECT * FROM $tableName WHERE $element <= '2019-08-11' AND $element >= '2016-03-09'";
+      var res = await db.rawQuery(checkExistName);
+      return res;
+    } else {
+      return [];
+    }
   }
 
   Future<List<Item>> getAllItems() async {
     // An function that return all item in data base
+    bool existTable = await checkExistTable(tableName: itemTableName);
+    if (existTable) {
+      final db = await database;
+      var res = await db.query(itemTableName);
+      return res.isNotEmpty
+          ? (res.isNotEmpty ? res.map((c) => Item.fromJson(c)).toList() : [])
+          : [];
+    } else {
+      return [];
+    }
+  }
+
+  Future<List<Item>> getExistItems() async {
+    // An function that return all item in data base
     final db = await database;
-    var res = await db.query(itemTableName);
-    return res.isNotEmpty
-        ? (res.isNotEmpty ? res.map((c) => Item.fromJson(c)).toList() : [])
-        : [];
+    bool existTable = await checkExistTable(tableName: itemTableName);
+    if (existTable) {
+      String checkExistName = "SELECT * FROM $itemTableName WHERE  count > 0 ";
+      var res = await db.rawQuery(checkExistName);
+      return res.isNotEmpty
+          ? (res.isNotEmpty ? res.map((c) => Item.fromJson(c)).toList() : [])
+          : [];
+    } else {
+      return [];
+    }
+  }
+
+  tableSearchElementItemsTableOut(
+      {required String elementSearch, required String element}) async {
+    // search if the name is exist in table
+    bool existTable = await checkExistTable(tableName: itemTableName);
+    if (existTable) {
+      final db = await database;
+      String checkExistName =
+          "SELECT * FROM $itemTableName WHERE $element LIKE '%$elementSearch%' AND count > 0";
+
+      var res = await db.rawQuery(checkExistName);
+      return res;
+    } else {
+      return [];
+    }
+  }
+
+  tableSearchElementNoEmptyDepots(
+      {required String elementSearch, required String element}) async {
+    // An function that return all supplier or customer in data base
+
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: depotTableName);
+    if (existTable) {
+      String checkExistName =
+          "SELECT * FROM $depotTableName WHERE $element LIKE '%$elementSearch%' AND  availableCapacity > 0";
+
+      var res = await db.rawQuery(checkExistName);
+
+      return res;
+    } else {
+      return [];
+    }
+  }
+
+  getAllObjects({required String tableName}) async {
+    // An function that return all item in data base
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      final db = await database;
+      return await db.query(tableName);
+    } else {
+      return [];
+    }
   }
 
   Future<bool> tableHasObject(
@@ -333,53 +429,98 @@ class DBProvider {
       String tableName = itemTableName}) async {
     // An function that return all item in data base
     final db = await database;
-
-    var res = await db
-        .query(tableName, where: "$element = ?", whereArgs: [searchFor]);
-    return res.isNotEmpty;
-    ;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      var res = await db
+          .query(tableName, where: "$element = ?", whereArgs: [searchFor]);
+      return res.isNotEmpty;
+    } else {
+      return false;
+    }
   }
 
   Future<List<Supplier>> getAllSupplier({String type = ""}) async {
     // An function that return all supplier or customer in data base
     final db = await database;
-    var res =
-        await db.query(type == "" ? supplierTableName : customerTableName);
-    return res.isNotEmpty
-        ? (res.isNotEmpty
-            ? res
-                .map((sup) => Supplier.fromJson(
-                    sup, type == "" ? supplierType : customerType))
-                .toList()
-            : [])
-        : [];
+    bool existTable = await checkExistTable(
+        tableName: type == "" ? supplierTableName : customerTableName);
+    if (existTable) {
+      var res =
+          await db.query(type == "" ? supplierTableName : customerTableName);
+      return res.isNotEmpty
+          ? (res.isNotEmpty
+              ? res
+                  .map((sup) => Supplier.fromJson(
+                      sup, type == "" ? supplierType : customerType))
+                  .toList()
+              : [])
+          : [];
+    } else {
+      return [];
+    }
   }
 
   Future<List<Worker>> getAllWorkers() async {
     // An function that return all supplier or customer in data base
     final db = await database;
-    var res = await db.query(workerTableName);
-    return res.isNotEmpty
-        ? (res.isNotEmpty
-            ? res.map((worker) => Worker.fromJson(worker)).toList()
-            : [])
-        : [];
+    bool existTable = await checkExistTable(tableName: workerTableName);
+    if (existTable) {
+      var res = await db.query(workerTableName);
+      return res.isNotEmpty
+          ? (res.isNotEmpty
+              ? res.map((worker) => Worker.fromJson(worker)).toList()
+              : [])
+          : [];
+    } else {
+      return [];
+    }
   }
 
   Future<List<Depot>> getAllDepots() async {
     // An function that return all supplier or customer in data base
     final db = await database;
-    var res = await db.query(depotTableName);
-    return res.isNotEmpty
-        ? (res.isNotEmpty
-            ? res.map((depot) => Depot.fromJson(depot)).toList()
-            : [])
-        : [];
+
+    bool existTable = await checkExistTable(tableName: depotTableName);
+    if (existTable) {
+      var res = await db.query(depotTableName);
+      return res.isNotEmpty
+          ? (res.isNotEmpty
+              ? res.map((depot) => Depot.fromJson(depot)).toList()
+              : [])
+          : [];
+    } else {
+      return [];
+    }
+  }
+
+  Future<List<Depot>> getNoEmptyDepots() async {
+    // An function that return all supplier or customer in data base
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: depotTableName);
+    if (existTable) {
+      String checkExistName =
+          "SELECT * FROM $depotTableName WHERE  availableCapacity > 0";
+
+      var res = await db.rawQuery(checkExistName);
+
+      return res.isNotEmpty
+          ? (res.isNotEmpty
+              ? res.map((depot) => Depot.fromJson(depot)).toList()
+              : [])
+          : [];
+    } else {
+      return [];
+    }
   }
 
   getObject({required int id, required String tableName}) async {
     final db = await database;
-    return await db.query(tableName, where: "id = ?", whereArgs: [id]);
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      return await db.query(tableName, where: "id = ?", whereArgs: [id]);
+    } else {
+      return [];
+    }
   }
 /*
   newUser(User newUser) async {

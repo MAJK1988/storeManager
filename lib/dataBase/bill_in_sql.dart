@@ -6,18 +6,18 @@ import '../utils/utils.dart';
 import 'depot_sql.dart';
 
 addNewBillIn({required Bill bill, required List<ItemBill> listItemBill}) async {
-  Log(tag: "addNewBillIn", message: "Activate Function");
+  String tag = "addNewBillIn";
+  Log(tag: tag, message: "Activate Function");
   String tableName = BillInTableName;
   final db = await DBProvider.db.database;
   //get the biggest id in the table
   List<Map<String, Object?>> table;
 
-  bool tableExist =
-      await DBProvider.db.checkExistTable(tableName: tableName, db: db);
+  bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
   if (tableExist) {
     table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
   } else {
-    Log(tag: "addNewItem", message: "table not exist, Try to create table");
+    Log(tag: tag, message: "table not exist, Try to create table");
     await DBProvider.db.creatTable(tableName, bill.createSqlTable());
     addNewBillIn(bill: bill, listItemBill: listItemBill);
     return -1;
@@ -34,8 +34,8 @@ addNewBillIn({required Bill bill, required List<ItemBill> listItemBill}) async {
   //insert to the table using the new id
   Log(tag: "Index is: ", message: id.toString());
   var raw = await db.rawInsert(
-      "INSERT Into $tableName (id,depotId,dateTime, outsidePersonId,type,workerId, itemBills)"
-      " VALUES (?,?,?, ?,?,?, ? )",
+      "INSERT Into $tableName (id,depotId,dateTime, outsidePersonId,type,workerId, itemBills,totalPrices)"
+      " VALUES (?,?,?, ?,?,?, ?,? )",
       [
         id,
         "NewDepotId${bill.type}$id",
@@ -45,13 +45,16 @@ addNewBillIn({required Bill bill, required List<ItemBill> listItemBill}) async {
         bill.type,
         bill.workerId,
         //
-        "itemBills${bill.type}$id"
+        "itemBills$tableName${bill.type}$id",
+        bill.totalPrices
       ]);
   int i = 0;
   for (ItemBill itemBill in listItemBill) {
     i = i + 1;
     await addNewBillItem(
-        itemBill: itemBill, tableName: "itemBills${bill.type}$id", id: i);
+        itemBill: itemBill,
+        tableName: "itemBills$tableName${bill.type}$id",
+        id: i);
 
     var res = await DBProvider.db
         .getObject(id: itemBill.depotID, tableName: depotTableName);
@@ -60,28 +63,41 @@ addNewBillIn({required Bill bill, required List<ItemBill> listItemBill}) async {
     if (res.isNotEmpty && resItem.isNotEmpty) {
       // Add itemBill to depot
       Depot depot = Depot.fromJson(res.first);
-      ItemsDepot itemsDepot = ItemsDepot(
-          id: 0,
-          itemId: itemBill.IDItem,
-          itemBillId: itemBill.id,
-          number: itemBill.number,
-          billId: bill.ID,
-          itemBillIdOut: "");
-      String tableName = depot.depotListItem;
-      await addNewDepotItem(itemsDepot: itemsDepot, tableName: tableName);
       Item item = Item.fromJson(resItem.first);
-      item.count = item.count + itemBill.number;
-      // Update item number
-      await DBProvider.db
-          .updateObject(v: item, tableName: itemTableName, id: item.ID);
-      // update item's depot
-      await addNewItemDepot(
-          itemDepot: ItemDepot(number: itemBill.number, depotId: depot.Id),
-          tableName: item.depotID);
-      //Add new supplier to item if it isn't exist
-      await addNewItemSupplier(
-          itemSupplier: ItemSupplier(supplier: bill.outsidePersonId),
-          tableName: item.supplierID);
+      depot.availableCapacity =
+          depot.availableCapacity + item.volume * itemBill.number;
+      Log(
+          tag: tag,
+          message:
+              "availableCapacity: ${depot.availableCapacity}, capacity: ${depot.capacity}");
+      if (depot.availableCapacity < depot.capacity) {
+        ItemsDepot itemsDepot = ItemsDepot(
+            id: 0,
+            itemId: itemBill.IDItem,
+            itemBillId: i,
+            number: itemBill.number,
+            billId: id,
+            itemBillIdOut: "");
+        String tableName = depot.depotListItem;
+        await addNewDepotItem(itemsDepot: itemsDepot, tableName: tableName);
+
+        item.count = item.count + itemBill.number;
+        // Update item number
+        await DBProvider.db
+            .updateObject(v: item, tableName: itemTableName, id: item.ID);
+        // Update depot capacity
+        await DBProvider.db
+            .updateObject(v: depot, tableName: depotTableName, id: depot.Id);
+
+        // update item's depot
+        await addNewItemDepot(
+            itemDepot: ItemDepot(number: itemBill.number, depotId: depot.Id),
+            tableName: item.depotID);
+        //Add new supplier to item if it isn't exist
+        await addNewItemSupplier(
+            itemSupplier: ItemSupplier(supplier: bill.outsidePersonId),
+            tableName: item.supplierID);
+      }
     }
   }
   return raw;
@@ -97,8 +113,7 @@ addNewBillItem(
   //get the biggest id in the table
   List<Map<String, Object?>> table;
 
-  bool tableExist =
-      await DBProvider.db.checkExistTable(tableName: tableName, db: db);
+  bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
   if (tableExist) {
     table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
   } else {

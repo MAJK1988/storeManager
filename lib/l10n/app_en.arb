@@ -129,8 +129,16 @@
     "@add_worker": {
       "description": "A programmer greeting"
     },
+    "worker": "Worker",
+    "@worker": {
+      "description": "A programmer greeting"
+    },
     "add_customer": "Add customer",
     "@add_customer": {
+      "description": "A programmer greeting"
+    },
+    "customer": "Customer",
+    "@customer": {
       "description": "A programmer greeting"
     },
     "phone": "Phone",
@@ -163,6 +171,10 @@
     },
      "bill_receipt": "Bill receipt",
     "@bill_receipt": {
+      "description": "A programmer greeting"
+    },
+     "bill_out": "Bill",
+    "@bill_out": {
       "description": "A programmer greeting"
     },
     "recipient": "Recipient",
@@ -237,6 +249,12 @@
       "description": "A programmer greeting"},
       "depot":"Depot",
       "@depot": {
+      "description": "A programmer greeting"},
+      "bill_manager":"Bills manager",
+      "@bill_manager": {
+      "description": "A programmer greeting"},
+      "depot_message":"Depot is full. Please choose another depot or adjust the quantity!",
+      "@depot_message": {
       "description": "A programmer greeting"}
     
     

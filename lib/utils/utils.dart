@@ -194,29 +194,52 @@ Widget inputElementTable(
 TableRow inputDataBillInTable(
     {required ShowObject showObject,
     required ValueChanged<int> delete,
-    required int index}) {
+    required int index,
+    required String type}) {
   String tag = "inputDataBillInTable";
   bool visible = true;
-  return TableRow(children: [
-    TableCell(child: centreText(text: showObject.value0)), // name item
-    TableCell(child: centreText(text: showObject.value1)), //number
-    TableCell(child: centreText(text: showObject.value2)), //Production price
-    TableCell(child: centreText(text: showObject.value3)), //Price
-    TableCell(child: centreText(text: showObject.value4)),
-    Stack(children: [
-      TableCell(child: centreText(text: showObject.value5)),
-      Positioned(
-        top: 0,
-        right: 0,
-        child: IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              delete(index);
-              Log(tag: tag, message: "delete object index: $index ");
-            }),
-      ),
-    ])
-  ]);
+  if (type == billIn) {
+    return TableRow(children: [
+      TableCell(child: centreText(text: showObject.value0)), // name item
+      TableCell(child: centreText(text: showObject.value1)), //number
+      TableCell(child: centreText(text: showObject.value2)), //Production price
+      TableCell(child: centreText(text: showObject.value3)), //Price
+      TableCell(child: centreText(text: showObject.value4)),
+      Stack(children: [
+        TableCell(child: centreText(text: showObject.value5)),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                delete(index);
+                Log(tag: tag, message: "delete object index: $index ");
+              }),
+        ),
+      ])
+    ]);
+  } else {
+    return TableRow(children: [
+      TableCell(child: centreText(text: showObject.value0)), // name item
+      TableCell(child: centreText(text: showObject.value1)), //number
+      TableCell(child: centreText(text: showObject.value2)), //Production price
+      TableCell(child: centreText(text: showObject.value3)), //Price
+      Stack(children: [
+        TableCell(child: centreText(text: showObject.value5)),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                delete(index);
+                Log(tag: tag, message: "delete object index: $index ");
+              }),
+        ),
+      ])
+    ]);
+  }
 }
 
 Widget centreText(
@@ -250,7 +273,7 @@ addSuppliersToDatabase({String type = ""}) async {
     Supplier supplier = Supplier(
         Id: 0,
         registerTime: createRandomDate(),
-        name: nameArray.elementAt(i),
+        name: "SupplierName$i",
         address: addressArray.elementAt(i),
         phoneNumber:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
@@ -272,7 +295,7 @@ addWorkersToDatabase({required int workersNumber}) async {
     int status = (Random().nextInt(4) + 1);
     Worker worker = Worker(
         Id: 0,
-        name: "${nameArray.elementAt(i)}Worker",
+        name: "WorkerName$i",
         address: "${addressArray.elementAt(i)}worker",
         phoneNumber:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
@@ -292,7 +315,7 @@ addItemToDatabase({required int itemNumber}) async {
   for (int i = 0; i < itemNumber; i++) {
     Item item = Item(
       ID: 0,
-      name: "name$i",
+      name: "ItemName$i",
       soldBy: ((Random().nextInt(35) + 1) > 16) ? "Kg" : "unit",
       madeIn: ((Random().nextInt(35) + 1) > 16) ? "China" : "France",
       barCode: (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
@@ -320,7 +343,7 @@ addDepotToDatabase({required int depotNumber}) async {
   for (int i = 0; i < depotNumber; i++) {
     Depot depot = Depot(
         Id: 0,
-        name: "name$i",
+        name: "DepotName$i",
         address: "adrress$i",
         capacity: Random().nextDouble() * (45 - 16) + 16.1,
         availableCapacity: 0,
@@ -335,12 +358,13 @@ addDepotToDatabase({required int depotNumber}) async {
   }
 }
 
-String createRandomDate() {
-  int year = 2010 + Random().nextInt(10);
-  int month = Random().nextInt(12);
-  int day = Random().nextInt(12);
-  int hour = Random().nextInt(23);
-  int minute = Random().nextInt(59);
+String createRandomDate(
+    {int year = 0, int month = 0, int day = 0, int hour = 0, int minute = 0}) {
+  (year == 0) ? year = 2010 + Random().nextInt(10) : year = year;
+  (month == 0) ? month = Random().nextInt(12) : month = month;
+  (day == 0) ? day = Random().nextInt(12) : day = day;
+  (hour == 0) ? hour = Random().nextInt(23) : hour = hour;
+  (minute == 0) ? minute = Random().nextInt(59) : minute = minute;
 
   return ('$year-${month < 10 ? "0$month" : month}-${day < 10 ? "0$day" : day} – ${hour < 10 ? "0$hour" : hour}:${minute < 10 ? "0$minute" : minute}');
 }

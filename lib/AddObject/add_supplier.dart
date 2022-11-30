@@ -407,7 +407,7 @@ class _AddSupplierState extends State<AddSupplier> {
                         // Function that add depot to dataBase
                         //addDepotToDatabase(depotNumber: 3);
                         // Function that add 300 item
-                        addItemToDatabase(itemNumber: 30);
+                        // addItemToDatabase(itemNumber: 30);
 
                         /*List<Item> items = await DBProvider.db.getAllItems();
                         for (Item item in items) {
@@ -448,8 +448,9 @@ class _AddSupplierState extends State<AddSupplier> {
                                 message: object.registerTime);
                           }
                         }*/
-                        /* DBProvider.db.deleteTable(tableName: itemTableName);
-                        DBProvider.db.deleteTable(tableName: supplierTableName);
+                        // DBProvider.db.deleteTable(tableName: BillInTableName);
+                        DBProvider.db.deleteDatabase();
+                        /* DBProvider.db.deleteTable(tableName: supplierTableName);
                         DBProvider.db.deleteTable(tableName: depotTableName);*/
                       },
                       child: Text(

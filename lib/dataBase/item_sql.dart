@@ -10,8 +10,7 @@ addNewItem({required Item item}) async {
   //get the biggest id in the table
   List<Map<String, Object?>> table;
 
-  bool tableExist =
-      await DBProvider.db.checkExistTable(tableName: tableName, db: db);
+  bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
   if (tableExist) {
     table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
   } else {
@@ -70,8 +69,7 @@ addNewItemDepot(
   //get the biggest id in the table
   List<Map<String, Object?>> table;
 
-  bool tableExist =
-      await DBProvider.db.checkExistTable(tableName: tableName, db: db);
+  bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
   if (!tableExist) {
     Log(
         tag: "addNewItemDepot",
@@ -114,8 +112,7 @@ addNewItemSupplier(
   // table related to item
   Log(tag: "addNewItemSupplier", message: "Activate Function");
   final db = await DBProvider.db.database;
-  bool tableExist =
-      await DBProvider.db.checkExistTable(tableName: tableName, db: db);
+  bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
   if (!tableExist) {
     Log(
         tag: "addNewItemSupplier",

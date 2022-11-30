@@ -30,7 +30,9 @@
     "address_text": "الرجاء إدخال العنوان: ",
     "add_supplier": "إضافة مورد",
     "add_worker": "إضافة عامل",
+    "worker": "عامل",
     "add_customer": "إضافة زبون",
+    "customer": "زبون",
     "phone": "هاتف",
     "phone_text": "الرجاء إدخال رقم الهاتف",
     "email": "بريد الإلكتروني",
@@ -39,6 +41,7 @@
     "salary_text": "الرجاء إدخال الراتب",
     "position": "منصب",
     "bill_receipt": "فاتورة استلام",
+    "bill_out": "فاتورة",
     "recipient": "مستلم",
     "date": "تاريخ",
     "payment_method": "طريقة دفع",
@@ -57,7 +60,9 @@
     "capacity": "سعة",
     "capacity_text": "الرجاء تحديد سعة",
     "add_depot": "إضافة مستودع",
-     "depot":"مستودع"
+     "depot":"مستودع",
+     "bill_manager":"مدير الفواتير",
+     "depot_message":"مخزن ممتلئ. رجاء اختيار مخزن اخر او عدل الكمية!"
 
 
     
