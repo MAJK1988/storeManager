@@ -7,6 +7,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:store_manager/utils/objects.dart';
 
 import '../utils/utils.dart';
+import 'depot_sql.dart';
 import 'item_sql.dart';
 
 class DBProvider {
@@ -63,28 +64,21 @@ class DBProvider {
 
   addNewSupplier(
       {required Supplier outSidePerson, required String type}) async {
+    String tag = "addNewSupplier";
     String tableName =
         type == supplierType ? supplierTableName : customerTableName;
-    Log(
-        tag: "addNewSupplier",
-        message: "table name is $tableName, type is: $type ");
+    Log(tag: tag, message: "table name is $tableName, type is: $type ");
     final db = await database;
     //get the biggest id in the table
-    var table;
+
     bool tableExist = await checkExistTable(tableName: tableName);
-    if (tableExist) {
-      table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
-    } else {
-      Log(
-          tag: "addNewSupplier",
-          message: "table not exist, Try to create table");
+    if (!tableExist) {
+      Log(tag: tag, message: "table not exist, Try to create table");
       await creatTable(
           tableName, outSidePerson.createSqlTable(tableName: tableName));
-      addNewSupplier(outSidePerson: outSidePerson, type: type);
-      return -1;
     }
+    var table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
     int id;
-    (table.first['id']).toString();
     // ignore: prefer_is_empty
     (table.first.isEmpty)
         ? id = 0
@@ -92,7 +86,7 @@ class DBProvider {
             ? id = 0
             : id = int.parse((table.first['id']).toString());
     //insert to the table using the new id
-    Log(tag: "Index is: ", message: id.toString());
+    Log(tag: tag, message: "Index is: $id");
     var raw = await db.rawInsert(
         "INSERT Into $tableName (id,registerTime,name,address, phoneNumber, email,itemId,billId)"
         " VALUES (?,?,?,?,?,?,?,?)",
@@ -116,14 +110,11 @@ class DBProvider {
     List<Map<String, Object?>> table;
 
     bool tableExist = await checkExistTable(tableName: workerTableName);
-    if (tableExist) {
-      table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $workerTableName");
-    } else {
+    if (!tableExist) {
       Log(tag: "addNewWorker", message: "table not exist, Try to create table");
       await creatTable(workerTableName, worker.createSqlTable());
-      addNewWorker(worker: worker);
-      return -1;
     }
+    table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $workerTableName");
 
     int id;
     (table.first['id']).toString();
@@ -155,22 +146,19 @@ class DBProvider {
 
 /**Depot */
   addNewDepot({required Depot depot}) async {
-    Log(tag: "addNewItem", message: "Activate Function");
+    String tag = "addNewDepot";
+    Log(tag: tag, message: "Activate Function");
     String tableName = depotTableName;
     final db = await database;
     //get the biggest id in the table
     List<Map<String, Object?>> table;
 
     bool tableExist = await checkExistTable(tableName: tableName);
-    if (tableExist) {
-      table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
-    } else {
-      Log(tag: "addNewItem", message: "table not exist, Try to create table");
+    if (!tableExist) {
+      Log(tag: tag, message: "table not exist, Try to create table");
       await creatTable(tableName, depot.createSqlTable());
-      addNewDepot(depot: depot);
-      return -1;
     }
-
+    table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
     int id;
     (table.first['id']).toString();
     // ignore: prefer_is_empty
@@ -182,8 +170,8 @@ class DBProvider {
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,name,address, capacity,availableCapacity,billsID, depotListItem )"
-        " VALUES (?,?,?,?,?,?,? )",
+        "INSERT Into $tableName (id,name,address, capacity,availableCapacity,billsID, depotListItem,depotListOutItem)"
+        " VALUES (?,?,? ,?,?,? ,?,? )",
         [
           id,
           depot.name,
@@ -193,50 +181,8 @@ class DBProvider {
           depot.availableCapacity,
           "depotBillsID$id",
           //
-          "depotListItem$id"
-        ]);
-    return raw;
-  }
-
-  addNewDepotItem(
-      {required ItemsDepot itemsDepot, required String tableName}) async {
-    // table name NewDepotItem$DepotId
-    Log(tag: "addNewDepotItem", message: "Activate Function");
-    final db = await database;
-    //get the biggest id in the table
-    List<Map<String, Object?>> table;
-
-    bool tableExist = await checkExistTable(tableName: tableName);
-    if (tableExist) {
-      table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
-    } else {
-      Log(tag: "addNewItem", message: "table not exist, Try to create table");
-      await creatTable(
-          tableName, itemsDepot.createSqlTable(tableName: tableName));
-      addNewDepotItem(itemsDepot: itemsDepot, tableName: tableName);
-      return -1;
-    }
-
-    int id;
-    (table.first['id']).toString();
-    // ignore: prefer_is_empty
-    (table.first.isEmpty)
-        ? id = 0
-        : (table.first['id'] == null)
-            ? id = 0
-            : id = int.parse((table.first['id']).toString());
-    //insert to the table using the new id
-    Log(tag: "Index is: ", message: id.toString());
-    var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,itemId,itemBillId, number,billId,itemBillIdOut)"
-        " VALUES (?,?,? ,?,?,?)",
-        [
-          id,
-          itemsDepot.itemId,
-          itemsDepot.itemBillId,
-          itemsDepot.number,
-          itemsDepot.billId,
-          "itemBillIdOut$id${itemsDepot.itemBillId}${itemsDepot.billId}"
+          "depotListItem$id",
+          "depotListOutItem$id"
         ]);
     return raw;
   }
@@ -341,10 +287,151 @@ class DBProvider {
     bool existTable = await checkExistTable(tableName: tableName);
     if (existTable) {
       String checkExistName =
-          "SELECT * FROM $tableName WHERE $element <= '2019-08-11' AND $element >= '2016-03-09'";
+          "SELECT * FROM $tableName WHERE $element <= '2019-08-11' c $element >= '2016-03-09'";
       var res = await db.rawQuery(checkExistName);
       return res;
     } else {
+      return [];
+    }
+  }
+
+  getObjectsByDate(
+      {required String tableName,
+      required String element,
+      required String date,
+      String date1 = "",
+      required String tag}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      if (date1.isEmpty) {
+        date1 = addDayToDate(date: date);
+      }
+      Log(tag: tag, message: "date: '$date' date1: '$date1'");
+
+      String checkExistName = //AND  $element <= '$date - 23:59'
+          "SELECT * FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' ORDER BY $element DESC";
+      var res = await db.rawQuery(checkExistName);
+
+      return res;
+    } else {
+      Log(tag: tag, message: "table not exist ");
+      return [];
+    }
+  }
+
+  getObjectsByDateMaxNumber(
+      {required String tableName,
+      required String element,
+      required String date,
+      String date1 = "",
+      required String elementGroup,
+      required String elementOrder,
+      required String tag}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      if (date1.isEmpty) {
+        date1 = addDayToDate(date: date);
+      }
+      Log(tag: tag, message: "date: '$date' date1: '$date1'");
+
+      String checkExistName = //AND  $element <= '$date - 23:59'
+          "SELECT * FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' GROUP BY $elementGroup ORDER BY $elementOrder DESC ";
+      var res = await db.rawQuery(checkExistName);
+
+      return res;
+    } else {
+      Log(tag: tag, message: "table not exist ");
+      return [];
+    }
+  }
+
+  getObjectsByDateMaxNumberGroupeElement(
+      {required String tableName,
+      required String element,
+      required String date,
+      String date1 = "",
+      required String elementGroup,
+      required String elementMax,
+      String elementMax1 = "",
+      required String tag}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      if (date1.isEmpty) {
+        date1 = addDayToDate(date: date);
+      }
+      Log(tag: tag, message: "date: '$date' date1: '$date1'");
+
+      String checkExistName = //AND  $element <= '$date - 23:59'
+          "SELECT  $elementGroup, SUM($elementMax)AS $elementMax ${elementMax1.isNotEmpty ? ", SUM($elementMax1) AS $elementMax1" : ""}  FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' GROUP BY $elementGroup ORDER BY SUM($elementMax) DESC";
+      //"SELECT * FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' ORDER BY $element DESC";
+      var res = await db.rawQuery(checkExistName);
+
+      return res;
+    } else {
+      Log(tag: tag, message: "table not exist ");
+      return [];
+    }
+  }
+
+  getReportDayByObject(
+      {required String tableName,
+      required String element,
+      required String element1,
+      required String dateString,
+      required String date,
+      String date1 = "",
+      required String tag}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      if (date1.isEmpty) {
+        date1 = addDayToDate(date: date);
+      }
+      Log(tag: tag, message: "date: '$date' date1: '$date1'");
+
+      String checkExistName = //AND  $element <= '$date - 23:59'
+          "SELECT SUM($element) AS $element, SUM($element1) AS $element1  FROM $tableName WHERE $dateString >= '$date' AND  $dateString < '$date1'";
+      //"SELECT * FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' ORDER BY $element DESC";
+      var res = await db.rawQuery(checkExistName);
+
+      return res;
+    } else {
+      Log(tag: tag, message: "table not exist ");
+      return [];
+    }
+  }
+
+  getObjectsByDateMaxPrice(
+      {required String tableName,
+      required String element,
+      required String date,
+      required String id,
+      String date1 = "",
+      required String elementMax,
+      required String tag}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      if (date1.isEmpty) {
+        date1 = addDayToDate(date: date);
+      }
+
+      String queryMax = //AND  $element <= '$date - 23:59'
+          "SELECT $id, MAX($elementMax) FROM $tableName  WHERE $element >= '$date' AND  $element < '$date1'";
+      var maxValue = await db.rawQuery(queryMax);
+      Log(
+          tag: tag,
+          message:
+              "Max value is: ${maxValue.first}, id: ${maxValue.first.values.first}");
+      if (maxValue.isEmpty) return [];
+      var res = await getObject(id: 18, tableName: tableName);
+
+      return res;
+    } else {
+      Log(tag: tag, message: "table not exist ");
       return [];
     }
   }
@@ -418,6 +505,70 @@ class DBProvider {
     if (existTable) {
       final db = await database;
       return await db.query(tableName);
+    } else {
+      return [];
+    }
+  }
+
+  getAllBillItemForUniqueBill(
+      {required String tableName, required int billId}) async {
+    // An function that return all item in data base
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      final db = await database;
+
+      String query = tableName == billInItemTableName
+          ? "SELECT * FROM $tableName WHERE billId = $billId"
+          : "SELECT * FROM $tableName WHERE billOutId = $billId"; //billOutId
+      return await db.rawQuery(query);
+    } else {
+      return [];
+    }
+  }
+
+  getDepotBillOutItem(
+      {required String tableName,
+      required int billOutId,
+      required int billOutItemId,
+      required int itemDepotId}) async {
+    // An function that return all item in data base
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      final db = await database;
+      String query =
+          "SELECT * FROM $tableName WHERE billOutId = $billOutId AND billOutItemId = $billOutItemId AND itemDepotId = $itemDepotId";
+      return await db.rawQuery(query);
+    } else {
+      return [];
+    }
+  }
+
+  getDepotBillOutItems(
+      {required String tableName, required int itemDepotId}) async {
+    // An function that return all item in data base
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      final db = await database;
+      String query =
+          "SELECT * FROM $tableName WHERE itemDepotId = $itemDepotId";
+      return await db.rawQuery(query);
+    } else {
+      return [];
+    }
+  }
+
+  getDepotItem({
+    required String tableName,
+    required int billId,
+    required int itemBillId,
+  }) async {
+    // An function that return all item in data base
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      final db = await database;
+      String query =
+          "SELECT * FROM $tableName WHERE billId = $billId AND itemBillId = $itemBillId";
+      return await db.rawQuery(query);
     } else {
       return [];
     }
@@ -521,6 +672,41 @@ class DBProvider {
     } else {
       return [];
     }
+  }
+  /* billOutId: id,
+                billOutItemId: idBillItem,*/
+
+  getBillItemOut(
+      {required int billOutId,
+      required int billOutItemId,
+      required String tableName}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      final db = await database;
+      String query =
+          "SELECT * FROM $tableName WHERE billOutId = $billOutId AND billOutItemId = $billOutItemId";
+      return await db.rawQuery(query);
+    } else {
+      return [];
+    }
+  }
+
+  Future<int> getMaxId({required String tableName}) async {
+    final db = await database;
+    bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
+    int id = -1;
+    if (tableExist) {
+      var table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
+      (table.first['id']).toString();
+      // ignore: prefer_is_empty
+      (table.first.isEmpty)
+          ? id = -1
+          : (table.first['id'] == null)
+              ? id = -1
+              : id = int.parse((table.first['id']).toString());
+    }
+    return id;
   }
 /*
   newUser(User newUser) async {

@@ -11,15 +11,11 @@ addNewDepot({required Depot depot}) async {
   List<Map<String, Object?>> table;
 
   bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
-  if (tableExist) {
-    table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
-  } else {
+  if (!tableExist) {
     Log(tag: "addNewItem", message: "table not exist, Try to create table");
     await DBProvider.db.creatTable(tableName, depot.createSqlTable());
-    addNewDepot(depot: depot);
-    return -1;
   }
-
+  table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
   int id;
   (table.first['id']).toString();
   // ignore: prefer_is_empty
@@ -48,24 +44,23 @@ addNewDepot({required Depot depot}) async {
 }
 
 addNewDepotItem(
-    {required ItemsDepot itemsDepot, required String tableName}) async {
+    {required ItemsDepot itemsDepot,
+    required String tableName,
+    required String tagMain}) async {
   // table name NewDepotItem$DepotId
-  Log(tag: "addNewDepotItem", message: "Activate Function");
+  String tag = "$tagMain/addNewDepotItem";
+  Log(tag: tag, message: "Activate Function");
   final db = await DBProvider.db.database;
   //get the biggest id in the table
   List<Map<String, Object?>> table;
 
   bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
-  if (tableExist) {
-    table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
-  } else {
-    Log(tag: "addNewItem", message: "table not exist, Try to create table");
+  if (!tableExist) {
+    Log(tag: tag, message: "table not exist, Try to create table");
     await DBProvider.db
         .creatTable(tableName, itemsDepot.createSqlTable(tableName: tableName));
-    addNewDepotItem(itemsDepot: itemsDepot, tableName: tableName);
-    return -1;
   }
-
+  table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
   int id;
   (table.first['id']).toString();
   // ignore: prefer_is_empty
@@ -75,17 +70,22 @@ addNewDepotItem(
           ? id = 0
           : id = int.parse((table.first['id']).toString());
   //insert to the table using the new id
-  Log(tag: "Index is: ", message: id.toString());
+  Log(tag: tag, message: "Index is: $id");
   var raw = await db.rawInsert(
-      "INSERT Into $tableName (id,itemId,itemBillId, number,billId,itemBillIdOut)"
-      " VALUES (?,?,? ,?,?,?)",
+      "INSERT Into $tableName (id,itemId,itemBillId, number,billId)"
+      " VALUES (?,?,? ,?,?)",
       [
         id,
         itemsDepot.itemId,
         itemsDepot.itemBillId,
         itemsDepot.number,
-        itemsDepot.billId,
-        "itemBillIdOut$id${itemsDepot.itemBillId}${itemsDepot.billId}"
+        itemsDepot.billId
       ]);
-  return raw;
+  return id;
+}
+
+String addDayToDate({required String date, int dayNumber = 1}) {
+  DateTime dt = DateTime.parse(date);
+  var newDate = DateTime(dt.year, dt.month, dt.day + 1);
+  return newDate.toString();
 }

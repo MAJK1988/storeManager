@@ -162,6 +162,7 @@ Widget inputElementTable(
     required BuildContext context,
     required TextEditingController? controller,
     String hintText = "",
+    bool needValidation = true,
     TextInputType textInputType = TextInputType.text}) {
   return Center(
       child: Padding(
@@ -180,7 +181,7 @@ Widget inputElementTable(
             ),
             hintText: hintText),
         validator: (value) {
-          if (value!.isEmpty) {
+          if (value!.isEmpty && needValidation) {
             return AppLocalizations.of(context)!.required;
           }
           return null;
@@ -199,14 +200,16 @@ TableRow inputDataBillInTable(
   String tag = "inputDataBillInTable";
   bool visible = true;
   if (type == billIn) {
+    Log(tag: tag, message: "Show row data for input bill");
     return TableRow(children: [
       TableCell(child: centreText(text: showObject.value0)), // name item
       TableCell(child: centreText(text: showObject.value1)), //number
       TableCell(child: centreText(text: showObject.value2)), //Production price
       TableCell(child: centreText(text: showObject.value3)), //Price
-      TableCell(child: centreText(text: showObject.value4)),
+      TableCell(child: centreText(text: showObject.value4)), //Depot name
       Stack(children: [
-        TableCell(child: centreText(text: showObject.value5)),
+        TableCell(
+            child: centreText(text: showObject.value5)), // total price of item
         Positioned(
           top: 0,
           right: 0,
@@ -220,6 +223,7 @@ TableRow inputDataBillInTable(
       ])
     ]);
   } else {
+    Log(tag: tag, message: "Show row data for out bill");
     return TableRow(children: [
       TableCell(child: centreText(text: showObject.value0)), // name item
       TableCell(child: centreText(text: showObject.value1)), //number
@@ -258,7 +262,7 @@ Widget centreText(
 }
 
 void Log({required String tag, required String message}) {
-  print(tag + ": " + message);
+  print("$tag  :   $message");
 }
 /********************************** */
 
@@ -267,14 +271,15 @@ void Log({required String tag, required String message}) {
 Functions is used to create item in database like supplier, customer, item ....
 */
 addSuppliersToDatabase({String type = ""}) async {
+  String tag = "addNewSupplier";
   for (int i = 0;
       i < (type == "" ? nameArray.length : nameArrayCus.length);
       i++) {
     Supplier supplier = Supplier(
         Id: 0,
         registerTime: createRandomDate(),
-        name: "SupplierName$i",
-        address: addressArray.elementAt(i),
+        name: type == "" ? "SupplierName$i" : "Customer$i",
+        address: addressArray[i],
         phoneNumber:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
         email: "email$i${((Random().nextInt(35) + 1))}@mail.eu",
@@ -284,12 +289,17 @@ addSuppliersToDatabase({String type = ""}) async {
 
     int result = await DBProvider.db
         .addNewSupplier(outSidePerson: supplier, type: supplier.type);
-    Log(tag: "addNewSupplier ", message: "$result");
+    if (result == -1) {
+      await DBProvider.db
+          .addNewSupplier(outSidePerson: supplier, type: supplier.type);
+    }
+    Log(tag: tag, message: "object index $i");
   }
 }
 
 addWorkersToDatabase({required int workersNumber}) async {
-  Log(tag: "addWorkersToDatabase", message: "Start function");
+  String tag = "addWorker";
+  Log(tag: tag, message: "Start function");
 
   for (int i = 0; i < workersNumber; i++) {
     int status = (Random().nextInt(4) + 1);
@@ -299,13 +309,16 @@ addWorkersToDatabase({required int workersNumber}) async {
         address: "${addressArray.elementAt(i)}worker",
         phoneNumber:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
-        email: "emailWorker$i@mail.eu",
+        email: "emailWorker$i$status@mail.eu",
         startTime: createRandomDate(),
         endTime: "null",
         status: status,
         salary: status * 100);
     int result = await DBProvider.db.addNewWorker(worker: worker);
-    Log(tag: "addWorkersToDatabase", message: "$result");
+    if (result == -1) {
+      await DBProvider.db.addNewWorker(worker: worker);
+    }
+    Log(tag: tag, message: "object index $i");
   }
 }
 
@@ -325,7 +338,7 @@ addItemToDatabase({required int itemNumber}) async {
       actualPrice: Random().nextDouble() * (20 - 0.1) + 0.1,
       actualWin: Random().nextDouble() * (0.2 - 0.1) + 0.1,
       validityPeriod: (Random().nextInt(35) + 1),
-      volume: Random().nextDouble() * (0.5 - 0.1) + 0.1,
+      volume: Random().nextDouble() * (0.2 - 0.01) + 0.01,
       supplierID: "supplierID$i",
       customerID: "customerID$i",
       depotID: "depotID$i",
@@ -334,27 +347,35 @@ addItemToDatabase({required int itemNumber}) async {
     );
 
     int result = await addNewItem(item: item);
+    if (result == -1) {
+      await addNewItem(item: item);
+    }
     Log(tag: " addItemToDatabase", message: "$result");
   }
 }
 
 addDepotToDatabase({required int depotNumber}) async {
-  Log(tag: "addDepotToDatabase", message: "Start function");
+  String tag = "addDepot";
+  Log(tag: tag, message: "Start function");
   for (int i = 0; i < depotNumber; i++) {
     Depot depot = Depot(
         Id: 0,
         name: "DepotName$i",
         address: "adrress$i",
-        capacity: Random().nextDouble() * (45 - 16) + 16.1,
+        capacity: Random().nextDouble() * (150 - 100) + 100,
         availableCapacity: 0,
         billsID: "",
-        depotListItem: ""
+        depotListItem: "",
+        depotListOutItem: ""
 
         // soldBy: ((Random().nextInt(35) + 1) > 16) ? "Kg" : "unit",
         );
 
     int result = await DBProvider.db.addNewDepot(depot: depot);
-    Log(tag: " addDepotToDatabase", message: "$result");
+    if (result == -1) {
+      DBProvider.db.addNewDepot(depot: depot);
+    }
+    Log(tag: tag, message: "object index $i");
   }
 }
 

@@ -11,15 +11,11 @@ addNewItem({required Item item}) async {
   List<Map<String, Object?>> table;
 
   bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
-  if (tableExist) {
-    table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
-  } else {
+  if (!tableExist) {
     Log(tag: "addNewItem", message: "table not exist, Try to create table");
     await DBProvider.db.creatTable(tableName, item.createSqlTable());
-    addNewItem(item: item);
-    return -1;
   }
-
+  table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
   int id;
   (table.first['id']).toString();
   // ignore: prefer_is_empty
@@ -64,26 +60,23 @@ addNewItemDepot(
     {required ItemDepot itemDepot, required String tableName}) async {
   // table name: NewItemDepot$ItemID
   // table related to item
-  Log(tag: "addNewItemDepot", message: "Activate Function");
+  String tag = "addNewItemDepot";
+  Log(tag: tag, message: "Activate Function");
   final db = await DBProvider.db.database;
   //get the biggest id in the table
   List<Map<String, Object?>> table;
 
   bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
   if (!tableExist) {
-    Log(
-        tag: "addNewItemDepot",
-        message: "table not exist, Try to create table");
+    Log(tag: tag, message: "table not exist, Try to create table");
     await DBProvider.db
         .creatTable(tableName, itemDepot.createSqlTable(tableName: tableName));
-    addNewItemDepot(itemDepot: itemDepot, tableName: tableName);
-    return -1;
   }
   var res = await DBProvider.db
       .getObject(id: itemDepot.depotId, tableName: tableName);
   if (res.isEmpty) {
     // depot not exist
-    Log(tag: "addNewItemDepot", message: "Add new depot");
+    Log(tag: tag, message: "Add new depot");
     var raw = await db.rawInsert(
         /*late final int number;
   late final int depotId;*/
@@ -93,14 +86,14 @@ addNewItemDepot(
     return raw;
   } else {
     // depot exist
-    Log(tag: "addNewItemDepot", message: "depot exist!!!");
+    Log(tag: tag, message: "depot exist!!!");
     ItemDepot itemDepotUp = ItemDepot.fromJson(res.first);
     if (itemDepotUp.depotId == itemDepot.depotId) {
       itemDepotUp.updateNumber(
           newNumber: itemDepotUp.number + itemDepot.number);
       var up = await DBProvider.db.updateObject(
           v: itemDepotUp, tableName: tableName, id: itemDepotUp.depotId);
-      Log(tag: "addNewItemDepot", message: "depot has been updated");
+      Log(tag: tag, message: "depot has been updated");
     }
     return 0;
   }
@@ -119,8 +112,6 @@ addNewItemSupplier(
         message: "table not exist, Try to create table");
     await DBProvider.db.creatTable(
         tableName, itemSupplier.createSqlTable(tableName: tableName));
-    addNewItemSupplier(itemSupplier: itemSupplier, tableName: tableName);
-    return -1;
   }
   var res = await DBProvider.db
       .getObject(id: itemSupplier.supplier, tableName: tableName);

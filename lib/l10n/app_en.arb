@@ -255,6 +255,15 @@
       "description": "A programmer greeting"},
       "depot_message":"Depot is full. Please choose another depot or adjust the quantity!",
       "@depot_message": {
+      "description": "A programmer greeting"},
+      "count":"Count",
+      "@count": {
+      "description": "A programmer greeting"},
+      "depot_message_no_item":"Depot does not contain this quantity. Please choose another depot or adjust the quantity!",
+      "@depot_message_no_item": {
+      "description": "A programmer greeting"},
+      "report":"Report",
+      "@Report": {
       "description": "A programmer greeting"}
     
     
