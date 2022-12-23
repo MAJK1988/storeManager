@@ -256,6 +256,7 @@ const String supplierType = "Supplier",
     billIOutItemTableName = "billIOutItemTableName",
     itemTableName = "ItemsTableDSC1",
     billIn = "BillIn",
+    userTableName = "UsersTableName",
     billOut = "BillOut";
 
 Supplier initSupplier() {
@@ -601,13 +602,14 @@ List<String> getObjectsNameListAddBillOut() {
 
 Worker initWorker() {
   return Worker(
+      password: "password1",
       Id: -1,
-      name: "",
-      address: "",
-      phoneNumber: "",
-      email: "",
-      startTime: "",
-      endTime: "",
+      name: "name1",
+      address: "address",
+      phoneNumber: "phoneNumber",
+      email: "email1",
+      startTime: "startTime",
+      endTime: "startTime",
       status: 0,
       salary: 0);
 }
@@ -617,13 +619,14 @@ Worker intWorker = initWorker();
 class Worker {
   late final int Id;
   late final String name;
-  late final String address;
-  late final String phoneNumber;
-  late final String email;
+  late String address;
+  late String phoneNumber;
+  late String email;
+  late String password;
   late final String startTime;
-  late final String endTime;
-  late final int status;
-  late final double salary;
+  late String endTime;
+  late int status;
+  late double salary;
 
   Worker(
       {required this.Id,
@@ -631,6 +634,7 @@ class Worker {
       required this.address,
       required this.phoneNumber,
       required this.email,
+      required this.password,
       required this.startTime,
       required this.endTime,
       required this.status,
@@ -642,7 +646,8 @@ class Worker {
     address = json['address'];
     phoneNumber = json['phoneNumber'];
     email = json['email'];
-    startTime = json['startTime'];
+    email = json['email'];
+    password = json['password'];
     endTime = json['endTime'];
     status = json['status'];
     salary = json['salary'];
@@ -655,6 +660,7 @@ class Worker {
     _data['address'] = address;
     _data['phoneNumber'] = phoneNumber;
     _data['email'] = email;
+    _data['password'] = password;
     _data['startTime'] = startTime;
     _data['endTime'] = endTime;
     _data['status'] = status;
@@ -668,6 +674,7 @@ class Worker {
         name: "",
         address: "",
         phoneNumber: "",
+        password: "password",
         email: "",
         startTime: "",
         endTime: "",
@@ -683,6 +690,7 @@ class Worker {
         "address TEXT,"
         "phoneNumber TEXT NOT NULL UNIQUE,"
         "email TEXT NOT NULL UNIQUE,"
+        "password TEXT,"
         "startTime DATE NOT NULL,"
         "endTime DATE,"
         "status INTEGER,"
@@ -988,4 +996,10 @@ class ShowObject {
 
     return _data;
   }
+}
+
+class ChartData {
+  ChartData(this.x, this.y);
+  final String x;
+  final double? y;
 }

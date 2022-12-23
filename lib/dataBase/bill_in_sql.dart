@@ -189,6 +189,25 @@ addNewBillOut(
         await DBProvider.db
             .updateObject(v: item, tableName: itemTableName, id: item.ID);
 
+        Log(tag: tag, message: "Try to update itemDepot");
+        var resItemDepot = await DBProvider.db
+            .getObject(id: listItemOutBill[i].depotID, tableName: item.depotID);
+        if (resItemDepot.isNotEmpty) {
+          ItemDepot itemDepot = ItemDepot.fromJson(resItemDepot.first);
+          itemDepot.number = itemDepot.number - listItemOutBill[i].number;
+          if (itemDepot.number > 0) {
+            Log(tag: tag, message: "Update depot item");
+            await DBProvider.db.updateObject(
+                v: itemDepot,
+                tableName: item.depotID,
+                id: listItemOutBill[i].depotID);
+          } else {
+            Log(tag: tag, message: "delete depot item");
+            await DBProvider.db.deleteObject(
+                tableName: item.depotID, id: listItemOutBill[i].depotID);
+          }
+        }
+
         listItemOutBill[i].billId = id;
         Log(tag: tag, message: "Index is: $id");
         // Add item bill

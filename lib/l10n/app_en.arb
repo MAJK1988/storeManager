@@ -264,6 +264,15 @@
       "description": "A programmer greeting"},
       "report":"Report",
       "@Report": {
+      "description": "A programmer greeting"},
+      "sale_by_item":"Sale by item",
+      "@sale_by_item": {
+      "description": "A programmer greeting"},
+      "win_by_item":"Revenue by item",
+      "@win_by_item": {
+      "description": "A programmer greeting"},
+      "number_by_item":"Goods number",
+      "@win_by_item": {
       "description": "A programmer greeting"}
     
     

@@ -39,6 +39,12 @@ dependencies:
   path_provider: ^2.0.11
   provider: ^6.0.4
   sqflite: ^2.2.0+3
+  syncfusion_flutter_charts: ^20.3.61
+  intl_phone_number_input: ^0.7.0+2
+  cupertino_icons: ^1.0.2
+  flutter_svg: ^1.1.6
+  shared_preferences: ^2.0.15
+  
 dependency_overrides:
   intl: 0.18.0
 
@@ -73,9 +79,10 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/icons/
+    - assets/images/
+    - assets/images/default.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

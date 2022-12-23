@@ -382,6 +382,7 @@ class _SupplierWidgetState extends State<SupplierWidget>
                               Id: 0,
                               name: name,
                               address: address,
+                              password: "password",
                               phoneNumber: phoneNumber,
                               email: email,
                               startTime: startDate,
@@ -424,7 +425,7 @@ class _SupplierWidgetState extends State<SupplierWidget>
                         }
                       }
                     }
-                    if (false) {
+                    if (true) {
                       // Function that add 10 suppliers to dataBase
                       addSuppliersToDatabase();
                       // Function that add 10 customers to dataBase
@@ -438,10 +439,23 @@ class _SupplierWidgetState extends State<SupplierWidget>
                     } else {
                       //DBProvider.db.deleteTable(tableName: depotTableName);
                       //DBProvider.db.deleteDatabase();
+                      /*  await DBProvider.db.addNewWorker(
+                          worker: Worker(
+                              Id: 0,
+                              name: "name",
+                              address: "address",
+                              phoneNumber: "phoneNumber",
+                              email: "email",
+                              password: "password",
+                              startTime: "startTime",
+                              endTime: "endTime",
+                              status: 0,
+                              salary: 1000));*/
                       for (int i = 0; i < (Random().nextInt(13) + 8); i++) {
                         //await generateBillIn(month: 6, year: 2022);
                       }
                       //generateBillOutMonth(year: 2022, month: 6);
+
                     }
 
                     /*List<Item> items = await DBProvider.db.getAllItems();

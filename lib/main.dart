@@ -8,6 +8,7 @@ import 'package:store_manager/lang_provider/page/localization_system_page.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'AddObject/add_item.dart';
+import 'auth/Screens/Login/login_screen.dart';
 import 'l10n/L10n.dart';
 import 'lang_provider/locale_provider.dart';
 import 'package:provider/provider.dart';
@@ -43,8 +44,9 @@ class MyApp extends StatelessWidget {
               // off the stack.
               // Navigator.pop(context);
               // When navigating to the "/" route, build the FirstScreen widget.
-              '/': (context) => const Home(),
+              '/': (context) => const LoginScreenApp(),
               // When navigating to the "/second" route, build the SecondScreen widget.
+              '/home': (context) => const Home(),
               '/AddItem': (context) => const AddItem(),
               '/AddSupplier': (context) => const AddSupplier(title: ''),
             },

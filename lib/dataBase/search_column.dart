@@ -6,7 +6,11 @@ import '../utils/objects.dart';
 import '../utils/utils.dart';
 
 class SearchColumnSTF extends StatefulWidget {
-  const SearchColumnSTF({super.key});
+  final Size size;
+  final ValueChanged<dynamic> getElement;
+
+  const SearchColumnSTF(
+      {super.key, required this.size, required this.getElement});
 
   @override
   State<SearchColumnSTF> createState() => _SearchColumnSTFState();
@@ -21,6 +25,8 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
   late List<String> listObjectSearch = getObjectsNameListAddBillIn();
   late List<ShowObject> listShowObject = [];
   late String tableName = itemTableName, billType = billIn;
+
+  late List<Item> listItem = [];
 
   activateSearch() {
     searchForInBill();
@@ -62,10 +68,12 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
               tag: tag,
               message:
                   "length of listShowObject is : ${listShowObject.length}");
+          listItem = listItemsIn;
         });
       } else {
         setState(() {
           listShowObject = [];
+          listItem == [];
           Log(tag: tag, message: "Search $tableName is null");
         });
       }
@@ -204,85 +212,90 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Wrap(
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Flex(
-              direction: Axis.horizontal,
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: inputElementTable(
-                            needValidation: false,
-                            controller: null,
-                            hintText: searchFor,
-                            onChang: (value) {
+        SizedBox(
+          width: widget.size.width * 0.95,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Flex(
+                direction: Axis.horizontal,
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: inputElementTable(
+                              needValidation: false,
+                              controller: null,
+                              hintText: searchFor,
+                              onChang: (value) {
+                                setState(() {
+                                  elementSearch = value!;
+                                  Log(
+                                      tag: "$tag elementSearch",
+                                      message: "elementSearch: $elementSearch");
+                                });
+                              },
+                              context: context),
+                        ),
+                        IconButton(
+                            icon: const Icon(Icons.search),
+                            onPressed: () async {
                               setState(() {
-                                elementSearch = value!;
-                                Log(
-                                    tag: "$tag elementSearch",
-                                    message: "elementSearch: $elementSearch");
+                                if (element == "") {
+                                  element = listSearchElement.first;
+                                }
+                                if (tableName == "") {
+                                  tableName = itemTableName;
+                                }
                               });
-                            },
-                            context: context),
-                      ),
-                      IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () async {
-                            setState(() {
-                              if (element == "") {
-                                element = listSearchElement.first;
-                              }
-                              if (tableName == "") {
-                                tableName = itemTableName;
-                              }
-                            });
 
-                            Log(
-                                tag: tag,
-                                message:
-                                    "search $elementSearch in $element, table name is: $tableName");
-                            // Search query
-                            await searchForInBill();
-                          }),
-                    ],
+                              Log(
+                                  tag: tag,
+                                  message:
+                                      "search $elementSearch in $element, table name is: $tableName");
+                              // Search query
+                              await searchForInBill();
+                            }),
+                      ],
+                    ),
                   ),
-                ),
-                DropdownButtonNew(
-                    initValue: initElementSearch,
-                    flex: 1,
-                    items: listSearchElement,
-                    icon: Icons.precision_manufacturing,
-                    onSelect: (value) {
-                      if (value!.isNotEmpty) {
+                  DropdownButtonNew(
+                      initValue: initElementSearch,
+                      flex: 1,
+                      items: listSearchElement,
+                      icon: Icons.precision_manufacturing,
+                      onSelect: (value) {
+                        if (value!.isNotEmpty) {
+                          setState(() {
+                            initElementSearch = value;
+                            listShowObject = [];
+                            listItem == [];
+                            Log(
+                                tag: "$tag element item",
+                                message: "element: $value");
+                          });
+                        }
+                      }),
+                  DropdownButtonNew(
+                      initValue: initObjectSearch,
+                      flex: 1,
+                      items: listObjectSearch,
+                      icon: Icons.search,
+                      onSelect: (value) {
                         setState(() {
-                          initElementSearch = value;
+                          initObjectSearch = value!;
                           listShowObject = [];
-                          Log(
-                              tag: "$tag element item",
-                              message: "element: $value");
+                          listItem == [];
+                          //["Item", "", "Worker", "Depot"];
                         });
-                      }
-                    }),
-                DropdownButtonNew(
-                    initValue: initObjectSearch,
-                    flex: 1,
-                    items: listObjectSearch,
-                    icon: Icons.search,
-                    onSelect: (value) {
-                      setState(() {
-                        initObjectSearch = value!;
-                        listShowObject = [];
-                        //["Item", "", "Worker", "Depot"];
-                      });
-                      searchFunctionConfig();
-                    }),
-              ],
+                        searchFunctionConfig();
+                      }),
+                ],
+              ),
             ),
           ),
         ),
@@ -290,19 +303,31 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
           visible: listShowObject.isNotEmpty,
           child: Expanded(
               // result of search
-              child: Card(
-            child: ListView.builder(
-                scrollDirection: Axis.vertical,
-                //shrinkWrap: true,
-                itemCount: listShowObject.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return ListTile(
-                      leading: const Icon(Icons.precision_manufacturing),
-                      title: Text(listShowObject[index].value0),
-                      subtitle: Text(listShowObject[index].value1),
-                      enabled: true,
-                      onTap: () {});
-                }),
+              child: SizedBox(
+            width: widget.size.width * 0.95,
+            height: widget.size.height * 0.35,
+            child: Card(
+              child: ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  //shrinkWrap: true,
+                  itemCount: listShowObject.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return ListTile(
+                        leading: const Icon(Icons.precision_manufacturing),
+                        title: Text(listShowObject[index].value0),
+                        subtitle: Text(listShowObject[index].value1),
+                        enabled: true,
+                        onTap: () {
+                          if (tableName == itemTableName) {
+                            widget.getElement(listItem[index]);
+                            setState(() {
+                              listShowObject = [];
+                              listItem = [];
+                            });
+                          }
+                        });
+                  }),
+            ),
           )),
         )
       ],

@@ -127,21 +127,23 @@ class DBProvider {
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
     var raw = await db.rawInsert(
-        "INSERT Into $workerTableName (id,name,address,phoneNumber, email, startTime, endTime,status, salary)"
-        " VALUES (?,?,?,?,?,?,?,?,?)",
+        "INSERT Into $workerTableName (id,name,address,phoneNumber, email, password,startTime, endTime,status, salary)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?)",
         [
           id,
           worker.name,
           worker.address,
           worker.phoneNumber,
           worker.email,
+          worker.password,
           worker.startTime,
           worker.endTime,
           worker.status,
           worker.salary
         ]);
-    return raw;
+    return id;
   }
+
 /** */
 
 /**Depot */
@@ -243,6 +245,16 @@ class DBProvider {
     }
   }
 
+  executeQuery({required String tableName, required String query}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      return await db.rawQuery(query);
+    } else {
+      return null;
+    }
+  }
+
   tableSearchName(
       {required String tableName,
       required String elementSearch,
@@ -320,6 +332,34 @@ class DBProvider {
     }
   }
 
+  getPriceWinByDate(
+      {required String tableName,
+      required String element,
+      required String date,
+      String date1 = "",
+      required String price,
+      required String win,
+      required String number,
+      required String tag}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      if (date1.isEmpty) {
+        date1 = addDayToDate(date: date);
+      }
+      Log(tag: tag, message: "date: '$date' date1: '$date1'");
+
+      String checkExistName = //AND  $element <= '$date - 23:59'
+          "SELECT SUM($price)AS $price, SUM($win)AS $win , SUM($number)AS $number FROM $tableName WHERE $element >= '$date' AND  $element < '$date1'";
+      var res = await db.rawQuery(checkExistName);
+
+      return res;
+    } else {
+      Log(tag: tag, message: "table not exist ");
+      return [];
+    }
+  }
+
   getObjectsByDateMaxNumber(
       {required String tableName,
       required String element,
@@ -365,8 +405,28 @@ class DBProvider {
       Log(tag: tag, message: "date: '$date' date1: '$date1'");
 
       String checkExistName = //AND  $element <= '$date - 23:59'
-          "SELECT  $elementGroup, SUM($elementMax)AS $elementMax ${elementMax1.isNotEmpty ? ", SUM($elementMax1) AS $elementMax1" : ""}  FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' GROUP BY $elementGroup ORDER BY SUM($elementMax) DESC";
+          "SELECT SUM(number)AS number,  $elementGroup, SUM($elementMax)AS $elementMax ${elementMax1.isNotEmpty ? ", SUM($elementMax1) AS $elementMax1" : ""}  FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' GROUP BY $elementGroup ORDER BY SUM($elementMax) DESC";
       //"SELECT * FROM $tableName WHERE $element >= '$date' AND  $element < '$date1' ORDER BY $element DESC";
+      var res = await db.rawQuery(checkExistName);
+
+      return res;
+    } else {
+      Log(tag: tag, message: "table not exist ");
+      return [];
+    }
+  }
+
+  getObjectsNumberGroupeElement(
+      {required String tableName,
+      required String checkedElement,
+      required int checkedValue,
+      required String outElement,
+      required String tag}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      String checkExistName = //AND  $element <= '$date - 23:59'
+          "SELECT SUM($outElement)AS $outElement   FROM $tableName WHERE $checkedElement = $checkedValue ";
       var res = await db.rawQuery(checkExistName);
 
       return res;

@@ -2,14 +2,18 @@ import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:store_manager/utils/objects.dart';
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'dart:math';
 
 import '../dataBase/item_sql.dart';
 import '../dataBase/sql_object.dart';
 
 late double padding = 16;
+const kPrimaryColor = Color(0xFF1565C0);
+const kPrimaryLightColor = Color(0xFFF1E6FF);
 Widget inputElementTextFormField(
     {required double padding,
     int minLine = 1,
@@ -306,6 +310,7 @@ addWorkersToDatabase({required int workersNumber}) async {
     Worker worker = Worker(
         Id: 0,
         name: "WorkerName$i",
+        password: "password$i",
         address: "${addressArray.elementAt(i)}worker",
         phoneNumber:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
@@ -388,4 +393,171 @@ String createRandomDate(
   (minute == 0) ? minute = Random().nextInt(59) : minute = minute;
 
   return ('$year-${month < 10 ? "0$month" : month}-${day < 10 ? "0$day" : day} – ${hour < 10 ? "0$hour" : hour}:${minute < 10 ? "0$minute" : minute}');
+}
+
+/** Plot functions */
+Visibility getCircularChart(
+    {required double width,
+    required String title,
+    required List<ChartData> data,
+    required String xTitle,
+    required String yTitle,
+    required TooltipBehavior tooltipBehavior,
+    bool showColumnSeries = true}) {
+  return Visibility(
+    visible: data.isNotEmpty,
+    child: Center(
+        child: Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: SizedBox(
+          width: width,
+          child: SfCircularChart(
+              borderWidth: 2.0,
+              borderColor: Colors.blue,
+              title: ChartTitle(
+                  text: title,
+                  // Aligns the chart title to left
+                  alignment: ChartAlignment.center,
+                  textStyle: const TextStyle(
+                    color: Color.fromARGB(255, 72, 73, 75),
+                    fontFamily: 'Roboto',
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  )),
+              // Enables the tooltip for all the series in chart
+              tooltipBehavior: tooltipBehavior,
+              series: [
+                // Initialize line series
+                PieSeries<ChartData, String>(
+                    // Enables the tooltip for individual series
+                    enableTooltip: true,
+                    animationDuration: 4000,
+                    dataSource: data,
+                    xValueMapper: (ChartData data, _) => data.x,
+                    yValueMapper: (ChartData data, _) => data.y)
+              ])),
+    )),
+  );
+}
+
+SizedBox reportIcon(
+    {required String title, required String data, required IconData iconData}) {
+  return SizedBox(
+    width: 225,
+    height: 100,
+    child: Center(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ListTile(
+            leading: Icon(
+              iconData,
+              color: Colors.blue,
+              size: 56,
+            ),
+            title: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(title,
+                  style: TextStyle(
+                      color: Colors.blue.shade900,
+                      fontFamily: 'Roboto',
+                      fontSize: 16,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.bold)),
+            ),
+            subtitle: Text(data,
+                style: const TextStyle(
+                    color: Colors.blue,
+                    fontFamily: 'Roboto',
+                    fontSize: 18,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w300)),
+            isThreeLine: true,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Align analyseSectionTitle({required String title}) {
+  return Align(
+    alignment: Alignment.centerLeft,
+    child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        child: SizedBox(
+          width: 150,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(title,
+                style: TextStyle(
+                    color: Colors.blue.shade900,
+                    fontFamily: 'Roboto',
+                    fontSize: 16,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Visibility getChart(
+    {required double width,
+    required String title,
+    required List<ChartData> data,
+    required String xTitle,
+    required String yTitle,
+    required TooltipBehavior tooltipBehavior,
+    bool showColumnSeries = true}) {
+  return Visibility(
+    visible: data.isNotEmpty,
+    child: Center(
+      child: SizedBox(
+        width: width,
+        child: SfCartesianChart(
+            title: ChartTitle(
+                text: title,
+                //backgroundColor: Colors.lightGreen,
+                //borderColor: Colors.blue,
+                // borderWidth: 2,
+                // Aligns the chart title to left
+                alignment: ChartAlignment.center,
+                textStyle: const TextStyle(
+                  color: Color.fromARGB(255, 72, 73, 75),
+                  fontFamily: 'Roboto',
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                )),
+            primaryXAxis: CategoryAxis(),
+            tooltipBehavior: tooltipBehavior,
+            series: <CartesianSeries>[
+              // Render column prices
+              showColumnSeries
+                  ? ColumnSeries<ChartData, String>(
+                      enableTooltip: true,
+                      animationDuration: 2000,
+                      animationDelay: 100,
+                      dataSource: data,
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y)
+                  : ColumnSeries<ChartData, String>(
+                      enableTooltip: true,
+                      dataSource: <ChartData>[],
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y),
+              LineSeries<ChartData, String>(
+                  animationDuration: 4500,
+                  animationDelay: 100,
+                  dataSource: data,
+                  xValueMapper: (ChartData data, _) => data.x,
+                  yValueMapper: (ChartData data, _) => data.y),
+            ]),
+      ),
+    ),
+  );
 }
