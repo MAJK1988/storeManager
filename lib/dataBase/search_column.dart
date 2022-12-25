@@ -8,9 +8,13 @@ import '../utils/utils.dart';
 class SearchColumnSTF extends StatefulWidget {
   final Size size;
   final ValueChanged<dynamic> getElement;
+  final String initObjectSearch;
 
   const SearchColumnSTF(
-      {super.key, required this.size, required this.getElement});
+      {super.key,
+      required this.size,
+      required this.getElement,
+      this.initObjectSearch = ""});
 
   @override
   State<SearchColumnSTF> createState() => _SearchColumnSTFState();
@@ -27,6 +31,9 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
   late String tableName = itemTableName, billType = billIn;
 
   late List<Item> listItem = [];
+  late List<Worker> listWorker = [];
+  late List<Depot> listDepot = [];
+  late List<Supplier> listSupplier = [];
 
   activateSearch() {
     searchForInBill();
@@ -96,6 +103,7 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
             : []) as List<ShowObject>;
         setState(() {
           listShowObject = listShowObjectIn;
+          listWorker = listWorkerIn;
           Log(
               tag: tag,
               message:
@@ -130,6 +138,7 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
             : []) as List<ShowObject>;
         setState(() {
           listShowObject = listShowObjectIn;
+          listSupplier = listSupplierIn;
           Log(
               tag: tag,
               message:
@@ -159,6 +168,7 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
             : []) as List<ShowObject>;
         setState(() {
           listShowObject = listShowObjectIn;
+          listDepot = listDepotIn;
           Log(
               tag: tag,
               message:
@@ -208,6 +218,18 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
       Log(tag: "$tag element item", message: "element: $element");
       activateSearch();
     });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    if (widget.initObjectSearch != "") {
+      setState(() {
+        initObjectSearch = widget.initObjectSearch;
+      });
+      searchFunctionConfig();
+    }
+    super.initState();
   }
 
   @override
@@ -280,20 +302,23 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
                           });
                         }
                       }),
-                  DropdownButtonNew(
-                      initValue: initObjectSearch,
-                      flex: 1,
-                      items: listObjectSearch,
-                      icon: Icons.search,
-                      onSelect: (value) {
-                        setState(() {
-                          initObjectSearch = value!;
-                          listShowObject = [];
-                          listItem == [];
-                          //["Item", "", "Worker", "Depot"];
-                        });
-                        searchFunctionConfig();
-                      }),
+                  Visibility(
+                    visible: widget.initObjectSearch == "",
+                    child: DropdownButtonNew(
+                        initValue: initObjectSearch,
+                        flex: 1,
+                        items: listObjectSearch,
+                        icon: Icons.search,
+                        onSelect: (value) {
+                          setState(() {
+                            initObjectSearch = value!;
+                            listShowObject = [];
+                            listItem == [];
+                            //["Item", "", "Worker", "Depot"];
+                          });
+                          searchFunctionConfig();
+                        }),
+                  ),
                 ],
               ),
             ),
@@ -321,10 +346,27 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
                           if (tableName == itemTableName) {
                             widget.getElement(listItem[index]);
                             setState(() {
-                              listShowObject = [];
                               listItem = [];
                             });
+                          } else if (tableName == workerTableName) {
+                            widget.getElement(listWorker[index]);
+                            setState(() {
+                              listWorker = [];
+                            });
+                          } else if (tableName == supplierTableName) {
+                            widget.getElement(listSupplier[index]);
+                            setState(() {
+                              listSupplier = [];
+                            });
+                          } else if (tableName == depotTableName) {
+                            widget.getElement(listDepot[index]);
+                            setState(() {
+                              listDepot = [];
+                            });
                           }
+                          setState(() {
+                            listShowObject = [];
+                          });
                         });
                   }),
             ),

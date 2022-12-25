@@ -250,6 +250,35 @@ TableRow inputDataBillInTable(
   }
 }
 
+TableRow inputDataBillInTableUniqueDepot(
+    {required ShowObject showObject,
+    required ValueChanged<int> delete,
+    required int index,
+    required String tagMain}) {
+  String tag = "$tagMain/inputDataBillInTableUniqueDepot";
+  bool visible = true;
+  Log(tag: tag, message: "Show row data for input bill");
+  return TableRow(children: [
+    TableCell(child: centreText(text: showObject.value0)), // name item
+    TableCell(child: centreText(text: showObject.value1)), //number
+    TableCell(child: centreText(text: showObject.value3)), //Price
+    Stack(children: [
+      TableCell(
+          child: centreText(text: showObject.value5)), // total price of item
+      Positioned(
+        top: 0,
+        right: 0,
+        child: IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              delete(index);
+              Log(tag: tag, message: "delete object index: $index ");
+            }),
+      ),
+    ])
+  ]);
+}
+
 Widget centreText(
     {required String text,
     TextStyle textStyle = const TextStyle(
@@ -267,6 +296,63 @@ Widget centreText(
 
 void Log({required String tag, required String message}) {
   print("$tag  :   $message");
+}
+
+titleTable({required BuildContext context, required String billType}) {
+  if (billType == billIn) {
+    return TableRow(children: [
+      //title
+      TableCell(
+          child: titleElementTable(title: AppLocalizations.of(context)!.item)),
+      TableCell(
+          child:
+              titleElementTable(title: AppLocalizations.of(context)!.number)),
+      TableCell(
+          child: titleElementTable(
+              title: AppLocalizations.of(context)!.production_date)),
+      TableCell(
+          child: titleElementTable(title: AppLocalizations.of(context)!.price)),
+      TableCell(
+          child: titleElementTable(title: AppLocalizations.of(context)!.depot)),
+      TableCell(
+          child: titleElementTable(
+              title: AppLocalizations.of(context)!.total_price)),
+    ]);
+  } else {
+    return TableRow(children: [
+      //title
+      TableCell(
+          child: titleElementTable(title: AppLocalizations.of(context)!.item)),
+      TableCell(
+          child:
+              titleElementTable(title: AppLocalizations.of(context)!.number)),
+      TableCell(
+          child: titleElementTable(
+              title: AppLocalizations.of(context)!.production_date)),
+      TableCell(
+          child: titleElementTable(title: AppLocalizations.of(context)!.price)),
+
+      TableCell(
+          child: titleElementTable(
+              title: AppLocalizations.of(context)!.total_price)),
+    ]);
+  }
+}
+
+titleTableUniqueDepot({required BuildContext context}) {
+  return TableRow(children: [
+    //title
+    TableCell(
+        child: titleElementTable(title: AppLocalizations.of(context)!.item)),
+    TableCell(
+        child: titleElementTable(title: AppLocalizations.of(context)!.number)),
+
+    TableCell(
+        child: titleElementTable(title: AppLocalizations.of(context)!.price)),
+    TableCell(
+        child: titleElementTable(
+            title: AppLocalizations.of(context)!.total_price)),
+  ]);
 }
 /********************************** */
 

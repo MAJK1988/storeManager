@@ -400,54 +400,8 @@ class _AddBillInState extends State<AddBillIn> {
     return -1;
   }
 
-  titleTable() {
-    if (widget.billType == billIn) {
-      return TableRow(children: [
-        //title
-        TableCell(
-            child:
-                titleElementTable(title: AppLocalizations.of(context)!.item)),
-        TableCell(
-            child:
-                titleElementTable(title: AppLocalizations.of(context)!.number)),
-        TableCell(
-            child: titleElementTable(
-                title: AppLocalizations.of(context)!.production_date)),
-        TableCell(
-            child:
-                titleElementTable(title: AppLocalizations.of(context)!.price)),
-        TableCell(
-            child:
-                titleElementTable(title: AppLocalizations.of(context)!.depot)),
-        TableCell(
-            child: titleElementTable(
-                title: AppLocalizations.of(context)!.total_price)),
-      ]);
-    } else {
-      return TableRow(children: [
-        //title
-        TableCell(
-            child:
-                titleElementTable(title: AppLocalizations.of(context)!.item)),
-        TableCell(
-            child:
-                titleElementTable(title: AppLocalizations.of(context)!.number)),
-        TableCell(
-            child: titleElementTable(
-                title: AppLocalizations.of(context)!.production_date)),
-        TableCell(
-            child:
-                titleElementTable(title: AppLocalizations.of(context)!.price)),
-
-        TableCell(
-            child: titleElementTable(
-                title: AppLocalizations.of(context)!.total_price)),
-      ]);
-    }
-  }
-
-  dataEntryTable() {
-    if (widget.billType == billIn) {
+  dataEntryTable({required String billType}) {
+    if (billType == billIn) {
       return TableRow(children: [
         TableCell(
             // item
@@ -1218,9 +1172,11 @@ class _AddBillInState extends State<AddBillIn> {
                                           .withOpacity(0.1)), //table border
                                   children: [
                                     //title
-                                    titleTable(),
+                                    titleTable(
+                                        context: context,
+                                        billType: widget.billType),
                                     //Input row
-                                    dataEntryTable(),
+                                    dataEntryTable(billType: widget.billType),
                                     //data bill items
                                     for (int i =
                                             listShowObjectMainTable.length - 1;
@@ -1390,8 +1346,8 @@ class _AddBillInState extends State<AddBillIn> {
                                                       totalPrices: toTalPrice);
                                                   await addNewBillIn(
                                                       bill: bill,
-                                                      listItemBill:
-                                                          itemBillIns);
+                                                      listItemBill: itemBillIns,
+                                                      isUniqueDepot: false);
                                                   setState(() {
                                                     itemBillIns.clear();
                                                     listShowObjectMainTable

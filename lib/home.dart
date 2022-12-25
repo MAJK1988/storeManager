@@ -232,26 +232,8 @@ class _HomeState extends State<Home> {
                         }
                       },
                     ),
-                    // Add supplier
-                    homeIcon(
-                      icon: Icons.search,
-                      onClicked: (value) {
-                        if (isVisibleItem) {
-                          setState(() {
-                            isVisibleItem = !isVisibleItem;
-                          });
 
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => AddSupplier(
-                                  title: AppLocalizations.of(context)!
-                                      .add_supplier),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    // Add customer
+                    // Edit object
                     homeIcon(
                       icon: Icons.edit,
                       onClicked: (value) {},

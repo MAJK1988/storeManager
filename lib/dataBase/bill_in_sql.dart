@@ -7,7 +7,10 @@ import '../utils/objects.dart';
 import '../utils/utils.dart';
 import 'depot_sql.dart';
 
-addNewBillIn({required Bill bill, required List<ItemBill> listItemBill}) async {
+addNewBillIn(
+    {required Bill bill,
+    required List<ItemBill> listItemBill,
+    required bool isUniqueDepot}) async {
   String tag = "addNewBillIn";
   Log(tag: tag, message: "Activate Function");
   String tableName = billInTableName;
@@ -71,7 +74,7 @@ addNewBillIn({required Bill bill, required List<ItemBill> listItemBill}) async {
           tag: tag,
           message:
               "availableCapacity: ${depot.availableCapacity}, capacity: ${depot.capacity}");
-      if (depot.availableCapacity < depot.capacity) {
+      if (depot.availableCapacity < depot.capacity || isUniqueDepot) {
         ItemsDepot itemsDepot = ItemsDepot(
             id: 0,
             itemId: itemBill.IDItem,
@@ -707,7 +710,10 @@ generateBillIn({required int year, required int month}) async {
                     workerId: worker.Id,
                     itemBills: "",
                     totalPrices: totalPrice);
-                await addNewBillIn(bill: bill, listItemBill: listItemBill);
+                await addNewBillIn(
+                    bill: bill,
+                    listItemBill: listItemBill,
+                    isUniqueDepot: false);
               }
             }
           } else {
