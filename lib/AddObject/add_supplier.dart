@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:ffi';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -14,11 +15,15 @@ class AddSupplier extends StatefulWidget {
   final String title;
   final String type;
   final bool visible;
+  final Supplier? supplier;
+  final Worker? worker;
   const AddSupplier(
       {super.key,
       required this.title,
       this.visible = false,
-      this.type = supplierType});
+      this.type = supplierType,
+      this.supplier,
+      this.worker});
 
   @override
   State<AddSupplier> createState() => _AddSupplierState();
@@ -35,6 +40,8 @@ class _AddSupplierState extends State<AddSupplier> {
         body: SupplierWidget(
           type: widget.type,
           visible: widget.visible,
+          supplier: widget.supplier,
+          worker: widget.worker,
         ));
   }
 }
@@ -42,11 +49,15 @@ class _AddSupplierState extends State<AddSupplier> {
 class SupplierWidget extends StatefulWidget {
   final String type;
   final bool visible;
+  final Supplier? supplier;
+  final Worker? worker;
 
   const SupplierWidget({
     super.key,
     required this.type,
     required this.visible,
+    this.supplier,
+    this.worker,
   });
 
   @override
@@ -62,6 +73,50 @@ class _SupplierWidgetState extends State<SupplierWidget>
     super.initState();
     tag = "$tag/${widget.type}";
     _controller = AnimationController(vsync: this);
+    setState(() {
+      if (widget.supplier != null) {
+        if (widget.type == supplierType || widget.type == customerType) {
+          Log(tag: tag, message: "input isn't null, but it's supplier");
+          Supplier supplier = widget.supplier!;
+
+          address = supplier.address;
+          addressControl.text = address;
+          email = supplier.email;
+          emailControl.text = email;
+          phoneNumber = supplier.phoneNumber;
+          phoneControl.text = phoneNumber;
+
+          registerTime = supplier.registerTime;
+          registerDate.text = registerTime;
+          name = supplier.name;
+          nameControl.text = name;
+        } else {
+          Log(tag: tag, message: "input isn't null, but isn't supplier");
+        }
+      } else if (widget.worker != null) {
+        Worker worker = widget.worker!;
+        Log(
+            tag: tag,
+            message: "input isn't null, it's worker ${worker.startTime}");
+        address = worker.address;
+        addressControl.text = address;
+        email = worker.email;
+        emailControl.text = email;
+        phoneNumber = worker.phoneNumber;
+        phoneControl.text = phoneNumber;
+        registerDate.text = registerTime;
+        name = worker.name;
+        nameControl.text = name;
+        startDate = worker.startTime;
+        startDateControl.text = startDate;
+        endDate = worker.endTime == "null" ? "" : worker.endTime;
+        endDateControl.text = endDate;
+        salary = worker.salary;
+        salaryControl.text = salary.toString();
+      } else {
+        Log(tag: tag, message: "input supplier and worker are null");
+      }
+    });
   }
 
   TextEditingController registerDate = TextEditingController(),
@@ -109,22 +164,6 @@ class _SupplierWidgetState extends State<SupplierWidget>
               child: Row(
                 children: <Widget>[
                   Flexible(
-                    child: inputElementDateFormField(
-                        controller: registerDate,
-                        context: context,
-                        padding: padding,
-                        icon: Icons.date_range,
-                        hintText: AppLocalizations.of(context)!.date,
-                        labelText: AppLocalizations.of(context)!.date,
-                        onChanged: ((value) {
-                          Log(tag: tag, message: "String date: $value");
-                          setState(() {
-                            registerDate.text = value!;
-                            registerTime = value;
-                          });
-                        })),
-                  ),
-                  Flexible(
                     child: inputElementTextFormField(
                         controller: nameControl,
                         padding: padding,
@@ -136,6 +175,25 @@ class _SupplierWidgetState extends State<SupplierWidget>
                             name = value!;
                           });
                         })),
+                  ),
+                  Flexible(
+                    child: Visibility(
+                      visible: !widget.visible,
+                      child: inputElementDateFormField(
+                          controller: registerDate,
+                          context: context,
+                          padding: padding,
+                          icon: Icons.date_range,
+                          hintText: AppLocalizations.of(context)!.date,
+                          labelText: AppLocalizations.of(context)!.date,
+                          onChanged: ((value) {
+                            Log(tag: tag, message: "String date: $value");
+                            setState(() {
+                              registerDate.text = value!;
+                              registerTime = value;
+                            });
+                          })),
+                    ),
                     /**/
                   ),
                 ],
@@ -325,24 +383,60 @@ class _SupplierWidgetState extends State<SupplierWidget>
                                 tableName: (widget.type == supplierType
                                     ? supplierTableName
                                     : customerTableName));
-                        if (!(hasPhoneNumber || hasEmail)) {
+                        if (!(hasPhoneNumber || hasEmail) ||
+                            widget.supplier != null) {
                           Supplier supplier = Supplier(
-                              Id: 0,
-                              registerTime: registerTime,
-                              name: name,
-                              address: address,
-                              phoneNumber: phoneNumber,
-                              email: email,
-                              type: widget.type,
-                              itemId: " ",
-                              billId: "");
-                          int result = await DBProvider.db.addNewSupplier(
-                              outSidePerson: supplier, type: supplier.type);
+                            Id: widget.supplier == null
+                                ? 0
+                                : widget.supplier!.Id,
+                            registerTime: registerTime,
+                            name: name,
+                            address: address,
+                            phoneNumber: phoneNumber,
+                            email: email,
+                            type: widget.type,
+                            itemId: widget.supplier == null
+                                ? " "
+                                : widget.supplier!.itemId,
+                            billId: widget.supplier == null
+                                ? " "
+                                : widget.supplier!.billId,
+                          );
+                          if (widget.supplier == null) {
+                            int result = await DBProvider.db.addNewSupplier(
+                                outSidePerson: supplier, type: supplier.type);
 
-                          Log(
-                              tag: tag,
-                              message:
-                                  "add supplier to Database result: $result");
+                            Log(
+                                tag: tag,
+                                message:
+                                    "add supplier to Database result: $result");
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.object_add,
+                            )));
+                          } else if (widget.supplier != null) {
+                            Log(
+                                tag: tag,
+                                message: "try update supplier object!!");
+                            int result = await DBProvider.db.updateObject(
+                                v: supplier,
+                                tableName: widget.type == supplierType
+                                    ? supplierTableName
+                                    : customerTableName,
+                                id: supplier.Id);
+                            Log(
+                                tag: tag,
+                                message:
+                                    "Supplier object has been updated, result: $result");
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.update_object,
+                            )));
+                          }
                           setState(() {
                             addressControl.text = "";
                             emailControl.text = "";
@@ -352,12 +446,6 @@ class _SupplierWidgetState extends State<SupplierWidget>
                             registerDate.text = "";
                             nameControl.text = "";
                           });
-                          // ignore: use_build_context_synchronously
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                            // ignore: use_build_context_synchronously
-                            AppLocalizations.of(context)!.object_add,
-                          )));
                         } else {
                           Log(tag: tag, message: "Item is exist in dataBase");
                           // ignore: use_build_context_synchronously
@@ -377,25 +465,51 @@ class _SupplierWidgetState extends State<SupplierWidget>
                                 element: "phoneNumber",
                                 searchFor: phoneNumber,
                                 tableName: workerTableName);
-                        if (!(hasPhoneNumber || hasEmail)) {
+                        if (!(hasPhoneNumber || hasEmail) ||
+                            widget.worker != null) {
                           Worker worker = Worker(
-                              Id: 0,
+                              Id: widget.worker == null ? 0 : widget.worker!.Id,
                               name: name,
                               address: address,
-                              password: "password",
+                              password: widget.worker == null
+                                  ? "password"
+                                  : widget.worker!.password,
                               phoneNumber: phoneNumber,
                               email: email,
                               startTime: startDate,
                               endTime: endDate,
                               status: status,
                               salary: salary);
-                          int result =
-                              await DBProvider.db.addNewWorker(worker: worker);
 
-                          Log(
-                              tag: tag,
-                              message:
-                                  "add worker to Database result: $result");
+                          if (widget.worker == null) {
+                            int result = await DBProvider.db
+                                .addNewWorker(worker: worker);
+
+                            Log(
+                                tag: tag,
+                                message:
+                                    "add worker to Database result: $result");
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.object_add,
+                            )));
+                          } else {
+                            int result = await DBProvider.db.updateObject(
+                                v: worker,
+                                tableName: workerTableName,
+                                id: worker.Id);
+
+                            Log(
+                                tag: tag,
+                                message:
+                                    "update worker in Database result: $result");
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.update_object,
+                            )));
+                          }
                           setState(() {
                             addressControl.text = "";
                             emailControl.text = "";
@@ -409,11 +523,7 @@ class _SupplierWidgetState extends State<SupplierWidget>
                             salaryControl.text = "";
                           });
                           // ignore: use_build_context_synchronously
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                            // ignore: use_build_context_synchronously
-                            AppLocalizations.of(context)!.object_add,
-                          )));
+
                         } else {
                           Log(tag: tag, message: "Item is exist in dataBase");
                           // ignore: use_build_context_synchronously
@@ -425,17 +535,17 @@ class _SupplierWidgetState extends State<SupplierWidget>
                         }
                       }
                     }
-                    if (true) {
+                    if (false) {
                       // Function that add 10 suppliers to dataBase
-                      addSuppliersToDatabase();
+                      await addSuppliersToDatabase();
                       // Function that add 10 customers to dataBase
-                      addSuppliersToDatabase(type: "Customer");
+                      await addSuppliersToDatabase(type: customerType);
                       // Function that add worker to dataBase
-                      addWorkersToDatabase(workersNumber: 3);
+                      await addWorkersToDatabase(workersNumber: 3);
                       // Function that add depot to dataBase
-                      addDepotToDatabase(depotNumber: 3);
+                      await addDepotToDatabase(depotNumber: 3);
                       // Function that add 300 item
-                      addItemToDatabase(itemNumber: 10);
+                      await addItemToDatabase(itemNumber: 10);
                     } else {
                       //DBProvider.db.deleteTable(tableName: depotTableName);
                       //DBProvider.db.deleteDatabase();

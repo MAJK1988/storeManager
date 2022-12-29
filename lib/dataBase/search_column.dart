@@ -8,13 +8,17 @@ import '../utils/utils.dart';
 class SearchColumnSTF extends StatefulWidget {
   final Size size;
   final ValueChanged<dynamic> getElement;
+  final ValueChanged<int>? getIndex;
   final String initObjectSearch;
+  final String? billType;
 
   const SearchColumnSTF(
       {super.key,
       required this.size,
       required this.getElement,
-      this.initObjectSearch = ""});
+      this.initObjectSearch = "",
+      this.billType,
+      this.getIndex});
 
   @override
   State<SearchColumnSTF> createState() => _SearchColumnSTFState();
@@ -34,9 +38,147 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
   late List<Worker> listWorker = [];
   late List<Depot> listDepot = [];
   late List<Supplier> listSupplier = [];
+  late Depot selectedDepot = initDepot();
+  late List<ItemsDepot> listItemsDepot = [];
+  late List<ItemsDepot> listSelectedItemsDepot = [];
+  late List<Item> listItems = [];
+  late List<ShowObject> listShowObjectMainTable = [];
 
   activateSearch() {
-    searchForInBill();
+    if (widget.billType == billIn) {
+      searchForInBill();
+    } else {
+      searchForOutBill();
+    }
+  }
+
+  searchForOutBill() async {
+    Log(
+        tag: tag,
+        message:
+            "Start searchForOutBill, tableName: $tableName, itemTableName: $itemTableName");
+
+    if (tableName == itemTableName) {
+      Log(
+          tag: tag,
+          message:
+              "selectedDepot.depotListItem: ${selectedDepot.depotListItem}");
+      var res = await DBProvider.db
+          .getAllObjects(tableName: selectedDepot.depotListItem);
+      if (res.isNotEmpty)
+      // convert json to item array
+      {
+        List<ItemsDepot> listItemsDepotIn = (res.isNotEmpty
+            ? (res.isNotEmpty
+                ? res
+                    .map<ItemsDepot>((item) => ItemsDepot.fromJson(item))
+                    .toList()
+                : [])
+            : []); //as List<Item>;
+        setState(() {
+          if (listSelectedItemsDepot.isEmpty) {
+            listItemsDepot = listItemsDepotIn;
+            listSelectedItemsDepot = listItemsDepotIn;
+          }
+        });
+        List<ShowObject> listShowObjectIn = [];
+        List<Item> listItemIn = [];
+
+        for (ItemsDepot itemsDepot in listItemsDepotIn) {
+          var resItem = await DBProvider.db
+              .getObject(id: itemsDepot.itemId, tableName: itemTableName);
+          var resBill = await DBProvider.db
+              .getObject(id: itemsDepot.billId, tableName: billInTableName);
+          if (resItem.isNotEmpty && resBill.isNotEmpty) {
+            Item item = Item.fromJson(resItem.first);
+            Bill bill = Bill.fromJson(resBill.first);
+            Log(
+                tag: tag,
+                message:
+                    "get item and bill data, bill id id: ${bill.ID}, itemsDepot bill id is: ${itemsDepot.billId}");
+            bool existTable = await DBProvider.db
+                .checkExistTable(tableName: billInItemTableName);
+
+            if (existTable) {
+              var resItemBill = await DBProvider.db.getObject(
+                  id: itemsDepot.itemBillId, tableName: billInItemTableName);
+
+              if (resItemBill.isNotEmpty) {
+                Log(tag: tag, message: "get itemBill data");
+                ItemBill itemBill = ItemBill.fromJson(resItemBill.first);
+                ShowObject showObject = ShowObject(
+                    value0: item.name,
+                    value1: item.count.toStringAsFixed(2),
+                    value3: itemBill.productDate,
+                    value2: itemsDepot.number.toString());
+                listShowObjectIn.add(showObject);
+                listItemIn.add(item);
+              } else {
+                Log(tag: tag, message: "itemBill isn't exist");
+              }
+            } else {
+              Log(tag: tag, message: "table ${bill.itemBills} isn't exist");
+            }
+          }
+          setState(() {
+            listShowObject = listShowObjectIn;
+            listItems = listItemIn;
+          });
+        }
+        Log(
+            tag: tag,
+            message:
+                "Search Bill out, ItemsDepot list length is: ${listItems.length}");
+      } else {
+        setState(() {
+          listItems = [];
+          listShowObject = [];
+          Log(tag: tag, message: "Search $tableName is null");
+        });
+      }
+    } else if (tableName == depotTableName &&
+        elementSearch != "" &&
+        element != "") {
+      var res = await DBProvider.db.tableSearchElementNoEmptyDepots(
+          elementSearch: elementSearch, element: element);
+      if (res.isNotEmpty) {
+        setState(() {
+          listSelectedItemsDepot = [];
+          listShowObjectMainTable = [];
+          selectedDepot = selectedDepot.init();
+        });
+        // convert json to item array
+        List<Depot> listDepotIn = (res.isNotEmpty
+            ? (res.isNotEmpty
+                ? res.map<Depot>((depot) => Depot.fromJson(depot)).toList()
+                : [])
+            : []) as List<Depot>;
+        // convert json to item array
+        List<ShowObject> listShowObjectIn = (res.isNotEmpty
+            ? (res.isNotEmpty
+                ? res
+                    .map<ShowObject>((depot) => ShowObject.fromJsonDepot(depot))
+                    .toList()
+                : [])
+            : []) as List<ShowObject>;
+        setState(() {
+          listDepot = listDepotIn;
+          listShowObject = listShowObjectIn;
+          Log(
+              tag: tag,
+              message:
+                  "length of listShowObject is : ${listShowObject.length}");
+        });
+      } else {
+        setState(() {
+          listDepot = [];
+          listShowObject = [];
+          Log(tag: tag, message: "Search $tableName is null");
+        });
+      }
+    } else if (tableName != itemTableName) {
+      searchForInBill();
+    }
   }
 
   searchForInBill() async {
@@ -75,12 +217,12 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
               tag: tag,
               message:
                   "length of listShowObject is : ${listShowObject.length}");
-          listItem = listItemsIn;
+          listItems = listItemsIn;
         });
       } else {
         setState(() {
           listShowObject = [];
-          listItem == [];
+          listItems == [];
           Log(tag: tag, message: "Search $tableName is null");
         });
       }
@@ -186,7 +328,7 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
   searchFunctionConfig() {
     setState(() {
       //["Item", "", "Worker", "Depot"];
-      if (initObjectSearch == "Worker") {
+      if (initObjectSearch == workerType) {
         initElementSearch = "";
         tableName = workerTableName;
         listSearchElement.clear();
@@ -199,17 +341,17 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
         tableName = itemTableName;
         listSearchElement = getElementsItems();
         initElementSearch = listSearchElement.first;
-      } else if (initObjectSearch == "Supplier") {
+      } else if (initObjectSearch == supplierType) {
         initElementSearch = "";
         tableName = supplierTableName;
         listSearchElement = getElementsSupplier();
         initElementSearch = listSearchElement.first;
-      } else if (initObjectSearch == "Depot") {
+      } else if (initObjectSearch == depotType) {
         initElementSearch = "";
         tableName = depotTableName;
         listSearchElement = getElementsDepot();
         initElementSearch = listSearchElement.first;
-      } else if (initObjectSearch == "Customer") {
+      } else if (initObjectSearch == customerType) {
         initElementSearch = "";
         tableName = customerTableName;
         listSearchElement = getElementsSupplier();
@@ -280,7 +422,7 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
                                   message:
                                       "search $elementSearch in $element, table name is: $tableName");
                               // Search query
-                              await searchForInBill();
+                              await activateSearch();
                             }),
                       ],
                     ),
@@ -344,9 +486,12 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
                         enabled: true,
                         onTap: () {
                           if (tableName == itemTableName) {
-                            widget.getElement(listItem[index]);
+                            widget.getElement(listItems[index]);
+                            if (widget.billType == billOut) {
+                              widget.getIndex!(index);
+                            }
                             setState(() {
-                              listItem = [];
+                              listItems = [];
                             });
                           } else if (tableName == workerTableName) {
                             widget.getElement(listWorker[index]);
@@ -362,6 +507,11 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
                             widget.getElement(listDepot[index]);
                             setState(() {
                               listDepot = [];
+                            });
+                          } else if (tableName == customerTableName) {
+                            widget.getElement(listSupplier[index]);
+                            setState(() {
+                              listSupplier = [];
                             });
                           }
                           setState(() {

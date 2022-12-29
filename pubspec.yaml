@@ -46,6 +46,7 @@ dependencies:
   shared_preferences: ^2.0.15
   pdf: ^3.8.4
   printing: ^5.9.3
+  settings_ui: ^2.0.2
   
 dependency_overrides:
   intl: 0.18.0

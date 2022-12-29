@@ -18,4 +18,8 @@ class LocaleProvider extends ChangeNotifier {
     _locale = L10n.all.first;
     notifyListeners();
   }
+
+  Locale getLocale() {
+    return _locale;
+  }
 }

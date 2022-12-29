@@ -7,7 +7,8 @@ import '../utils/utils.dart';
 
 class AddDepot extends StatefulWidget {
   final String title;
-  const AddDepot({super.key, required this.title});
+  final Depot? depot;
+  const AddDepot({super.key, required this.title, this.depot});
 
   @override
   State<AddDepot> createState() => _AddDepotState();
@@ -28,12 +29,15 @@ class _AddDepotState extends State<AddDepot> {
           title: Text(widget.title),
           centerTitle: true,
         ),
-        body: const DepotWidget());
+        body: DepotWidget(
+          depot: widget.depot,
+        ));
   }
 }
 
 class DepotWidget extends StatefulWidget {
-  const DepotWidget({super.key});
+  final Depot? depot;
+  const DepotWidget({super.key, this.depot});
 
   @override
   State<DepotWidget> createState() => _DepotWidgetState();
@@ -44,8 +48,26 @@ class _DepotWidgetState extends State<DepotWidget> {
   TextEditingController nameControl = TextEditingController(),
       capacityControl = TextEditingController(),
       addressControl = TextEditingController();
-  late String tag = "AddSupplier", name = "", address = "";
+  late String tag = "AddDepot", name = "", address = "";
   late double capacity = 0;
+  @override
+  void initState() {
+    // TODO: implement initState
+    if (widget.depot != null) {
+      Log(tag: tag, message: "Depot input isn't empty");
+      Depot depot = widget.depot!;
+      setState(() {
+        name = depot.name;
+        nameControl.text = name;
+        address = depot.address;
+        addressControl.text = address;
+        capacity = depot.capacity;
+        capacityControl.text = capacity.toString();
+      });
+    }
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -119,34 +141,60 @@ class _DepotWidgetState extends State<DepotWidget> {
                             element: "name",
                             searchFor: name,
                             tableName: depotTableName);
-                        if (!(hasName)) {
+                        if (!(hasName) || widget.depot != null) {
                           Depot depot = Depot(
-                              Id: 0,
+                              Id: widget.depot == null ? 0 : widget.depot!.Id,
                               address: address,
                               name: name,
                               capacity: capacity,
-                              availableCapacity: 0,
-                              billsID: " ",
-                              depotListItem: " ",
-                              depotListOutItem: "");
-                          int result =
-                              await DBProvider.db.addNewDepot(depot: depot);
+                              availableCapacity: widget.depot == null
+                                  ? 0
+                                  : widget.depot!.availableCapacity,
+                              billsID: widget.depot == null
+                                  ? " "
+                                  : widget.depot!.billsID,
+                              depotListItem: widget.depot == null
+                                  ? " "
+                                  : widget.depot!.depotListItem,
+                              depotListOutItem: widget.depot == null
+                                  ? " "
+                                  : widget.depot!.depotListOutItem);
+                          if (widget.depot == null) {
+                            int result =
+                                await DBProvider.db.addNewDepot(depot: depot);
 
-                          Log(
-                              tag: tag,
-                              message:
-                                  "add supplier to Database result: $result");
+                            Log(
+                                tag: tag,
+                                message:
+                                    "add depot to Database result: $result");
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.object_add,
+                            )));
+                          } else {
+                            int result = await DBProvider.db.updateObject(
+                                v: depot,
+                                tableName: depotTableName,
+                                id: depot.Id);
+
+                            Log(
+                                tag: tag,
+                                message:
+                                    "update depot in Database result: $result");
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(
+                              // ignore: use_build_context_synchronously
+                              AppLocalizations.of(context)!.update_object,
+                            )));
+                          }
                           setState(() {
                             addressControl.text = "";
                             capacityControl.text = "";
                             nameControl.text = "";
                           });
-                          // ignore: use_build_context_synchronously
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                            // ignore: use_build_context_synchronously
-                            AppLocalizations.of(context)!.object_add,
-                          )));
                         } else {
                           Log(tag: tag, message: "Item is exist in dataBase");
                           // ignore: use_build_context_synchronously

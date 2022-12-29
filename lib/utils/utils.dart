@@ -360,29 +360,27 @@ titleTableUniqueDepot({required BuildContext context}) {
 /*This functions is used only to create database for test 
 Functions is used to create item in database like supplier, customer, item ....
 */
-addSuppliersToDatabase({String type = ""}) async {
+addSuppliersToDatabase({String type = supplierType}) async {
   String tag = "addNewSupplier";
+  Log(tag: tag, message: "type: $type");
   for (int i = 0;
-      i < (type == "" ? nameArray.length : nameArrayCus.length);
+      i < (type == supplierType ? nameArray.length : nameArrayCus.length);
       i++) {
     Supplier supplier = Supplier(
         Id: 0,
         registerTime: createRandomDate(),
-        name: type == "" ? "SupplierName$i" : "Customer$i",
+        name: type == supplierType ? "SupplierName$i" : "Customer$i",
         address: addressArray[i],
         phoneNumber:
             (Random().nextInt(1000000) + 1000000).toString() + i.toString(),
         email: "email$i${((Random().nextInt(35) + 1))}@mail.eu",
-        type: type == "" ? supplierType : customerType,
+        type: type,
         itemId: "null",
         billId: "null");
 
-    int result = await DBProvider.db
-        .addNewSupplier(outSidePerson: supplier, type: supplier.type);
-    if (result == -1) {
-      await DBProvider.db
-          .addNewSupplier(outSidePerson: supplier, type: supplier.type);
-    }
+    int result =
+        await DBProvider.db.addNewSupplier(outSidePerson: supplier, type: type);
+
     Log(tag: tag, message: "object index $i");
   }
 }

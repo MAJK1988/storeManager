@@ -47,7 +47,9 @@ class MyApp extends StatelessWidget {
               '/': (context) => const LoginScreenApp(),
               // When navigating to the "/second" route, build the SecondScreen widget.
               '/home': (context) => const Home(),
-              '/AddItem': (context) => const AddItem(),
+              '/AddItem': (context) => const AddItem(
+                    item: null,
+                  ),
               '/AddSupplier': (context) => const AddSupplier(title: ''),
             },
             locale: provider.locale,

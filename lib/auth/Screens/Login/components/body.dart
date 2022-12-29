@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:store_manager/utils/objects.dart';
 
 import '../../../../home.dart';
+import '../../../../setting/setting.dart';
 import '../../../components/already_have_an_account_acheck.dart';
 import '../../../components/rounded_button.dart';
 import '../../../components/rounded_input_field.dart';
@@ -15,43 +16,46 @@ import '../../../services/validotrs.dart';
 import '../../Signup/signup_screen.dart';
 import 'background.dart';
 import 'package:store_manager/utils/utils.dart';
-import 'dart:async';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class Body extends StatefulWidget {
-  const Body({Key? key}) : super(key: key);
+class BodyLogin extends StatefulWidget {
+  final bool forChangePassword;
+  const BodyLogin({Key? key, required this.forChangePassword})
+      : super(key: key);
 
   @override
-  State<Body> createState() => _BodyState();
+  State<BodyLogin> createState() => _BodyLoginState();
 }
 
-class _BodyState extends State<Body> implements LoginCallBack {
+class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
   late String tag = "Login";
 
   late BuildContext ctx;
-  bool _isLoading = false;
+  bool forChangePassWord = false;
 
-  late String email = '', passWord = '';
+  late String email = '', passWord = '', passWord1 = '';
   late bool setText = true;
   late int count = 0;
   late LoginResponse response;
-  _BodyState() {
+  _BodyLoginState() {
     response = LoginResponse(this);
   }
   @override
   void initState() {
     //SharedPreferences.setMockInitialValues({});
+    if (!widget.forChangePassword) {
+      () async {
+        SharedPreferences _pref = await SharedPreferences.getInstance();
+        Log(tag: tag, message: "Try to login to app!!!");
 
-    () async {
-      SharedPreferences _pref = await SharedPreferences.getInstance();
-      Log(tag: tag, message: "Try to login to app!!!");
-
-      String email = _pref.getString("email") ?? "";
-      String password = _pref.getString("password") ?? "";
-      Log(tag: tag, message: "email: $email, password: $password");
-      if (email != "" && password != "") {
-        response.doLogin(email, password);
-      }
-    }();
+        String email = _pref.getString("email") ?? "";
+        String password = _pref.getString("password") ?? "";
+        Log(tag: tag, message: "email: $email, password: $password");
+        if (email != "" && password != "") {
+          response.doLogin(email, password);
+        }
+      }();
+    }
 
     super.initState();
   }
@@ -72,42 +76,61 @@ class _BodyState extends State<Body> implements LoginCallBack {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              "Welcome back",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 25.0,
-                  color: kPrimaryColor),
-            ),
+            Visibility(
+                visible: !widget.forChangePassword,
+                child: const Text(
+                  "Welcome back",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 25.0,
+                      color: kPrimaryColor),
+                )),
             SizedBox(height: size.height * 0.03),
             SvgPicture.asset(
               "assets/icons/login.svg",
               height: size.height * 0.35,
             ),
             SizedBox(height: size.height * 0.03),
-            RoundedInputField(
-              hintText: "Your Email",
-              onChanged: (value) {
-                setState(() {
-                  email = value;
-                });
-              },
-              inputText: setText,
-            ),
+            Visibility(
+                visible: !forChangePassWord,
+                child: RoundedInputField(
+                  hintText: AppLocalizations.of(context)!.email,
+                  onChanged: (value) {
+                    setState(() {
+                      email = value;
+                    });
+                  },
+                  inputText: setText,
+                )),
             RoundedPasswordField(
               onChanged: (value) {
                 setState(() {
                   passWord = value;
                 });
               },
-              hintText: 'Password',
+              hintText: AppLocalizations.of(context)!.password,
               inputText: setText,
             ),
+            Visibility(
+                visible: forChangePassWord,
+                child: RoundedPasswordField(
+                  onChanged: (value) {
+                    setState(() {
+                      passWord1 = value;
+                    });
+                  },
+                  hintText: AppLocalizations.of(context)!.password1,
+                  inputText: setText,
+                )),
             RoundedButton(
-              text: "LOGIN",
+              text: !widget.forChangePassword
+                  ? AppLocalizations.of(context)!.login
+                  : !forChangePassWord
+                      ? AppLocalizations.of(context)!.change_password
+                      : AppLocalizations.of(context)!.validate_new_password,
               press: () {
                 Log(tag: tag, message: "Test login callBack");
-                response.doLogin("email", "passWord");
+                //response.doLogin("email", "passWord");
                 if (!Validator.checkEmpty(email, passWord, passWord)) {
                   setState(() {
                     email = '';
@@ -116,23 +139,61 @@ class _BodyState extends State<Body> implements LoginCallBack {
                     count = 0;
                   });
                 } else {
-                  response.doLogin(email, passWord);
+                  if (!widget.forChangePassword) {
+                    Log(tag: tag, message: "Try to login");
+                    response.doLogin(email, passWord);
+                  } else {
+                    if (!forChangePassWord) {
+                      Log(tag: tag, message: "Try to validate email Password");
+                      response.doLogin(email, passWord);
+                    } else {
+                      Log(tag: tag, message: "Try to validate new password");
+                      if (passWord == passWord1) {
+                        Log(tag: tag, message: "Password has been changed");
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(
+                          // ignore: use_build_context_synchronously
+                          AppLocalizations.of(context)!.change_password,
+                        )));
+                        Navigator.pushReplacement<void, void>(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) =>
+                                const SettingWidget(),
+                          ),
+                        );
+                      } else {
+                        Log(tag: tag, message: "Error in new password!!!");
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(
+                          // ignore: use_build_context_synchronously
+                          AppLocalizations.of(context)!.error_password,
+                        )));
+                        setState(() {
+                          passWord = '';
+                          passWord1 = '';
+                        });
+                      }
+                    }
+                  }
                 }
               },
             ),
             SizedBox(height: size.height * 0.03),
-            AlreadyHaveAnAccountCheck(
-              press: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return SignUpScreen();
-                    },
-                  ),
-                );
-              },
-            ),
+            Visibility(
+                visible: !widget.forChangePassword,
+                child: AlreadyHaveAnAccountCheck(
+                  press: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return SignUpScreen();
+                        },
+                      ),
+                    );
+                  },
+                )),
           ],
         ),
       ),
@@ -142,6 +203,15 @@ class _BodyState extends State<Body> implements LoginCallBack {
   @override
   void onLoginError(String error) {
     Log(tag: tag, message: "error: $error");
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+      // ignore: use_build_context_synchronously
+      AppLocalizations.of(context)!.error_login,
+    )));
+    setState(() {
+      email = '';
+      passWord = '';
+    });
     // TODO: implement onLoginError
   }
 
@@ -161,12 +231,20 @@ class _BodyState extends State<Body> implements LoginCallBack {
           });
         });
       }
-      Navigator.pushReplacement<void, void>(
-        context,
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const Home(),
-        ),
-      );
+      if (!widget.forChangePassword) {
+        Navigator.pushReplacement<void, void>(
+          context,
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) => const Home(),
+          ),
+        );
+      } else {
+        if (!forChangePassWord) {
+          setState(() {
+            forChangePassWord = true;
+          });
+        }
+      }
     } else {
       Log(tag: tag, message: "result is empty no user");
     }

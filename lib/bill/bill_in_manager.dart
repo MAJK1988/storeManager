@@ -9,7 +9,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class BillInManager extends StatefulWidget {
   final String typeBill;
-  const BillInManager({super.key, required this.typeBill});
+  final bool isUniqueDepot;
+  const BillInManager(
+      {super.key, required this.typeBill, this.isUniqueDepot = true});
 
   @override
   State<BillInManager> createState() => _BillInManagerState();
@@ -55,9 +57,13 @@ class _BillInManagerState extends State<BillInManager> {
               .getObject(id: b.IDItem, tableName: itemTableName);
           var resDepot = await DBProvider.db
               .getObject(id: b.depotID, tableName: depotTableName);
-          if (resItem.isNotEmpty && resDepot.isNotEmpty) {
+          if (resItem.isNotEmpty &&
+              (resDepot.isNotEmpty || widget.isUniqueDepot)) {
             Item item = Item.fromJson(resItem.first);
-            Depot depot = Depot.fromJson(resDepot.first);
+            Depot depot = initDepot();
+            if (!widget.isUniqueDepot) {
+              depot = Depot.fromJson(resDepot.first);
+            }
 
             List<DynamicObject> dynamicObjects = [];
             var resItemDepots =

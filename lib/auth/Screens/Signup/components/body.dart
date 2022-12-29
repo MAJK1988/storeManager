@@ -8,8 +8,10 @@ import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:store_manager/auth/Screens/Signup/components/or_divider.dart';
 import 'package:store_manager/auth/Screens/Signup/components/social_icon.dart';
 import 'package:store_manager/auth/services/signup/signup_response.dart';
+import 'package:store_manager/dataBase/sql_object.dart';
 import 'package:store_manager/utils/objects.dart';
 import 'package:store_manager/utils/utils.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../../components/already_have_an_account_acheck.dart';
 import '../../../components/rounded_button.dart';
@@ -141,7 +143,14 @@ class _BodydState extends State<Body> implements SignUpCallBack {
               text: "SIGNUP",
               press: () async {
                 Log(tag: tag, message: "test sign up callBack");
-                response.doSignUp(initWorker());
+                //element: "name", searchFor: name
+                bool hasSaved = await DBProvider.db.tableHasObject(
+                    tableName: workerTableName,
+                    element: "email",
+                    searchFor: initWorker().email);
+                if (!hasSaved) {
+                  response.doSignUp(initWorker());
+                }
                 if (!Validator.checkAllInput(
                     email: email,
                     password: passWord,

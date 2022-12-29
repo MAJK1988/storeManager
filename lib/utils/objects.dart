@@ -246,6 +246,8 @@ String createColumnTable({required String name}) {
 
 const String supplierType = "Supplier",
     customerType = "Customer",
+    workerType = "Worker",
+    depotType = "Depot",
     customerTableName = "CustomersTable",
     supplierTableName = "SuppliersTable",
     workerTableName = "WorkersTable",
@@ -347,7 +349,8 @@ class Supplier {
         "phoneNumber TEXT NOT NULL UNIQUE,"
         "email TEXT NOT NULL UNIQUE,"
         "itemId TEXT NOT NULL UNIQUE,"
-        "billId TEXT NOT NULL UNIQUE"
+        "billId TEXT NOT NULL UNIQUE,"
+        "type TEXT"
         ")";
   }
 }
@@ -602,12 +605,12 @@ List<String> getObjectsNameListAddBillOut() {
 
 Worker initWorker() {
   return Worker(
-      password: "password1",
+      password: "123",
       Id: -1,
-      name: "name1",
+      name: "name-1",
       address: "address",
-      phoneNumber: "phoneNumber",
-      email: "email1",
+      phoneNumber: "phoneNumber-1",
+      email: "email-1",
       startTime: "startTime",
       endTime: "startTime",
       status: 0,
@@ -623,7 +626,7 @@ class Worker {
   late String phoneNumber;
   late String email;
   late String password;
-  late final String startTime;
+  late String startTime;
   late String endTime;
   late int status;
   late double salary;
@@ -651,6 +654,7 @@ class Worker {
     endTime = json['endTime'];
     status = json['status'];
     salary = json['salary'];
+    startTime = json['startTime'];
   }
   //from json to Depot
   Map<String, dynamic> toJson() {
@@ -702,13 +706,13 @@ class Worker {
 Depot initDepot() {
   return Depot(
       Id: -1,
-      address: "",
-      name: "",
+      address: "addressX",
+      name: "nameX",
       capacity: 0,
       availableCapacity: 0,
-      billsID: "",
-      depotListItem: "",
-      depotListOutItem: "");
+      billsID: "billsIDX",
+      depotListItem: "depotListItemX",
+      depotListOutItem: "depotListOutItemX");
 }
 
 Depot intDepot = initDepot();

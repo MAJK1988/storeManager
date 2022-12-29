@@ -88,8 +88,8 @@ class DBProvider {
     //insert to the table using the new id
     Log(tag: tag, message: "Index is: $id");
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,registerTime,name,address, phoneNumber, email,itemId,billId)"
-        " VALUES (?,?,?,?,?,?,?,?)",
+        "INSERT Into $tableName (id,registerTime,name,address, phoneNumber,email,itemId,billId, type)"
+        " VALUES (?,?,?,?,?,?,?,?,?)",
         [
           id,
           outSidePerson.registerTime,
@@ -99,6 +99,7 @@ class DBProvider {
           outSidePerson.email,
           "${type}Items$id",
           "${type}Bills$id",
+          type
         ]);
     return raw;
   }
@@ -219,7 +220,7 @@ class DBProvider {
     }
   }
 
-  updateObject(
+  Future<int> updateObject(
       {required var v, required String tableName, required int id}) async {
     // updateObject is a function that used to update an item in a table "tableName"
     final db = await database;

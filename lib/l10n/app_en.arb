@@ -226,6 +226,10 @@
     "@object_add": {
       "description": "A programmer greeting"
     },
+    "update_object": "Object has been updated",
+    "@update_object": {
+      "description": "A programmer greeting"
+    },
     "object_exist": "Object is exist in dataBase",
     "@object_exist": {
       "description": "A programmer greeting"
@@ -273,10 +277,59 @@
       "description": "A programmer greeting"},
       "number_by_item":"Goods number",
       "@win_by_item": {
+      "description": "A programmer greeting"},
+      "language":"Language",
+      "@language": {
+      "description": "A programmer greeting"},
+      "settings":"settings",
+      "@settings": {
+      "description": "A programmer greeting"},
+      "common":"Common",
+      "@common": {
+      "description": "A programmer greeting"},
+      "log_out":"Log out",
+      "@log_out": {
+      "description": "A programmer greeting"},
+      "account":"Account",
+      "@account": {
+      "description": "A programmer greeting"},
+      "security":"Security",
+      "@security": {
+      "description": "A programmer greeting"},
+      "change_password":"Change password",
+      "@change_password": {
+      "description": "A programmer greeting"},
+      "login":"Login",
+      "@login": {
+      "description": "A programmer greeting"},
+      "error_login":"Login Failed: Your Email or password is incorrect",
+      "@error_login": {
+      "description": "A programmer greeting"},
+      "password_changed": "Password changed successfully",
+      "@password_changed": {
+      "description": "A programmer greeting"},
+      "error_password":"Please verify the password",
+      "@error_password": {
+      "description": "A programmer greeting"},
+      "validate_new_password":"Validate password",
+      "@validate_new_password": {
+      "description": "A programmer greeting"},
+      "password":"Password",
+      "@password": {
+      "description": "A programmer greeting"},
+      "password1":"Password1",
+      "@password1": {
+      "description": "A programmer greeting"},
+      "email":"Email",
+      "@email": {
       "description": "A programmer greeting"}
+
+      
+  
+   
     
     
-    
+ 
 
     
     

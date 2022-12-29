@@ -13,7 +13,7 @@ class _LoginScreenState extends State<LoginScreenApp> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Body(),
+      body: BodyLogin(forChangePassword: false),
     );
   }
 }

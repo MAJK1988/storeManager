@@ -64,9 +64,14 @@ addNewBillIn(
         .getObject(id: itemBill.depotID, tableName: depotTableName);
     var resItem = await DBProvider.db
         .getObject(id: itemBill.IDItem, tableName: itemTableName);
-    if (res.isNotEmpty && resItem.isNotEmpty) {
+
+    if ((res.isNotEmpty || isUniqueDepot) && resItem.isNotEmpty) {
       // Add itemBill to depot
-      Depot depot = Depot.fromJson(res.first);
+      Depot depot = initDepot();
+      if (!isUniqueDepot) {
+        depot = Depot.fromJson(res.first);
+      }
+
       Item item = Item.fromJson(resItem.first);
       depot.availableCapacity =
           depot.availableCapacity + item.volume * itemBill.number;
@@ -82,7 +87,7 @@ addNewBillIn(
             number: itemBill.number,
             billId: id);
         String tableName = depot.depotListItem;
-        Log(tag: tag, message: "Add itemsDepot object ");
+        Log(tag: tag, message: "Add itemsDepot object, tableName: $tableName ");
         await addNewDepotItem(
             itemsDepot: itemsDepot, tableName: tableName, tagMain: tag);
 
@@ -518,7 +523,10 @@ deleteBillOut({required Bill bill, required String tagMain}) async {
   }
 }
 
-deleteBillIn({required Bill bill, required String tagMain}) async {
+deleteBillIn(
+    {required Bill bill,
+    required String tagMain,
+    bool isUniqueDepot = true}) async {
   String tag = "$tagMain/deleteBillIn";
   if (bill.type == billIn) {
     bool deleteBill = true;
@@ -534,9 +542,13 @@ deleteBillIn({required Bill bill, required String tagMain}) async {
             .getObject(tableName: itemTableName, id: itemBill.IDItem);
         var resDepot = await DBProvider.db
             .getObject(id: itemBill.depotID, tableName: depotTableName);
-        if (resItem.isNotEmpty && resDepot.isNotEmpty) {
+        if (resItem.isNotEmpty && (resDepot.isNotEmpty || isUniqueDepot)) {
           Item item = Item.fromJson(resItem.first);
-          Depot depot = Depot.fromJson(resDepot.first);
+          Depot depot = initDepot();
+          if (!isUniqueDepot) {
+            depot = Depot.fromJson(resDepot.first);
+          }
+
           Log(tag: tag, message: "try to get depot item");
           var resDepotItem = await DBProvider.db.getDepotItem(
               tableName: depot.depotListItem,
