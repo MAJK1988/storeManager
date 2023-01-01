@@ -401,7 +401,9 @@ class _HomeState extends State<Home> {
                       onClicked: (value) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const Report(),
+                            builder: (context) => const BillInManager(
+                              typeBill: billOut,
+                            ), //const Report(),
                           ),
                         );
                       },

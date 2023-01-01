@@ -1,10 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 import '../dataBase/item_sql.dart';
 import '../dataBase/sql_object.dart';
@@ -39,7 +38,23 @@ class _AddItemState extends State<AddItem> {
       controllerValidityPeriod = TextEditingController(),
       controllerVolume = TextEditingController(),
       controllerPrice = TextEditingController(),
-      controllerWin = TextEditingController();
+      controllerWin = TextEditingController(),
+      categoryControl = TextEditingController();
+
+  initCategoryList() async {
+    setState(() {
+      categoryList = [""];
+    });
+    var resCategoryList =
+        await DBProvider.db.getAllObjects(tableName: itemCategoryTableName);
+    if (resCategoryList.isNotEmpty) {
+      for (var resCategory in resCategoryList) {
+        setState(() {
+          categoryList.add(resCategory['name']);
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -68,6 +83,9 @@ class _AddItemState extends State<AddItem> {
         controllerWin.text = win.toString();
       });
     }
+    () async {
+      await initCategoryList();
+    }();
     super.initState();
   }
 
@@ -83,14 +101,23 @@ class _AddItemState extends State<AddItem> {
       codeBar = '',
       madeIn = '',
       description = '',
-      category = "one",
+      category = "",
       soldBy = '';
-  late double validityPeriod = 0.0, volume = 0.0, price = 0.0, win = 0.0;
+  late double validityPeriod = 0.0,
+      volume = 0.0,
+      price = 0.0,
+      win = 0.0,
+      width = 660.0,
+      height = 711.0,
+      limitedWidth = 536;
   File? image;
   final ImagePicker _picker = ImagePicker();
+  List<String> categoryList = [""];
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+    Log(tag: tag, message: "width : ${size.width}");
     return Scaffold(
         appBar: AppBar(
           title: Text(AppLocalizations.of(context)!.add_item),
@@ -98,8 +125,8 @@ class _AddItemState extends State<AddItem> {
         ),
         body: Center(
           child: SizedBox(
-            width: 660.0,
-            height: 711.0,
+            width: width,
+            height: height,
             child: SingleChildScrollView(
               child: Center(
                   child: Form(
@@ -256,77 +283,167 @@ class _AddItemState extends State<AddItem> {
                           })),
                     ),
                     //category and sale by
-                    Padding(
-                      padding: EdgeInsets.only(
-                          right: padding, left: 2 * padding, bottom: padding),
-                      child: Row(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(left: padding),
-                            child: Text(
-                                AppLocalizations.of(context)!.item_category),
-                          ),
-                          Flexible(
-                            child: DropdownButton<String>(
-                              value: "one",
-                              icon: const Icon(Icons.arrow_downward),
-                              elevation: 16,
-                              style: const TextStyle(color: Colors.deepPurple),
-                              underline: Container(
-                                height: 2,
-                                color: Colors.deepPurpleAccent,
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                            right: padding, left: 2 * padding, bottom: padding),
+                        child: Flex(
+                          direction: size.width > limitedWidth
+                              ? Axis.horizontal
+                              : Axis.vertical,
+                          children: <Widget>[
+                            //category
+                            SizedBox(
+                              width: size.width > width
+                                  ? width / 2 * 0.9
+                                  : size.width > limitedWidth
+                                      ? (size.width) / 2 * 0.9
+                                      : (size.width), //
+                              child: Row(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(left: padding),
+                                    child: Text(AppLocalizations.of(context)!
+                                        .item_category),
+                                  ),
+                                  DropdownButton<String>(
+                                    value: category,
+                                    icon: const Icon(Icons.arrow_downward),
+                                    elevation: 16,
+                                    style: const TextStyle(
+                                        color: Colors.deepPurple),
+                                    underline: Container(
+                                      height: 2,
+                                      color: Colors.deepPurpleAccent,
+                                    ),
+                                    onChanged: (String? value) {
+                                      // This is called when the user selects an item.
+                                      setState(() {
+                                        category = value!;
+                                      });
+                                    },
+                                    items: categoryList
+                                        .map<DropdownMenuItem<String>>(
+                                            (String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                  //Add category
+                                  IconButton(
+                                      color: Colors.blue,
+                                      iconSize: 20,
+                                      icon: const Icon(Icons.add),
+                                      onPressed: () {
+                                        show_Widget(
+                                            context: context,
+                                            title: AppLocalizations.of(context)!
+                                                .item_category,
+                                            widget: Row(
+                                              children: [
+                                                Flexible(
+                                                    flex: 3,
+                                                    child:
+                                                        inputElementTextFormField(
+                                                      controller:
+                                                          categoryControl,
+                                                      textInputType:
+                                                          TextInputType.number,
+                                                      hintText:
+                                                          AppLocalizations.of(
+                                                                  context)!
+                                                              .item_category,
+                                                      icon: Icons.category,
+                                                      labelText:
+                                                          AppLocalizations.of(
+                                                                  context)!
+                                                              .item_category,
+                                                      onChanged:
+                                                          (String? value) {
+                                                        if (value!.isNotEmpty) {
+                                                          categoryControl.text =
+                                                              value;
+                                                        }
+                                                      },
+                                                      padding: 8,
+                                                    )),
+                                                Flexible(
+                                                  child: IconButton(
+                                                      color: Colors.blue,
+                                                      iconSize: 20,
+                                                      icon: const Icon(
+                                                          Icons.save_alt),
+                                                      onPressed: () async {
+                                                        if (categoryControl
+                                                                .text !=
+                                                            "") {
+                                                          await DBProvider.db
+                                                              .addNewItemCategory(
+                                                                  itemCategory:
+                                                                      ItemCategory(
+                                                                          id: 0,
+                                                                          name:
+                                                                              categoryControl.text));
+                                                          categoryControl.text =
+                                                              "";
+                                                          await initCategoryList();
+                                                        }
+                                                      }),
+                                                )
+                                              ],
+                                            ),
+                                            response: (value) {});
+                                      }),
+                                ],
                               ),
-                              onChanged: (String? value) {
-                                // This is called when the user selects an item.
-                                setState(() {
-                                  category = value!;
-                                });
-                              },
-                              items: [
-                                "one",
-                                "two",
-                                "three"
-                              ].map<DropdownMenuItem<String>>((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(left: 2 * padding),
-                            child: Text(AppLocalizations.of(context)!.sale_by),
-                          ),
-                          Flexible(
-                            child: DropdownButton<String>(
-                              value: "one",
-                              icon: const Icon(Icons.arrow_downward),
-                              elevation: 16,
-                              style: const TextStyle(color: Colors.deepPurple),
-                              underline: Container(
-                                height: 2,
-                                color: Colors.deepPurpleAccent,
-                              ),
-                              onChanged: (String? value) {
-                                // This is called when the user selects an item.
-                                setState(() {
-                                  soldBy = value!;
-                                });
-                              },
-                              items: [
-                                "one",
-                                "two",
-                                "three"
-                              ].map<DropdownMenuItem<String>>((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
+
+                            //SoldBy
+                            SizedBox(
+                                width: size.width > width
+                                    ? width / 2 * 0.9
+                                    : size.width > limitedWidth
+                                        ? (size.width) / 2 * 0.9
+                                        : (size.width),
+                                child: Row(
+                                  children: [
+                                    Padding(
+                                      padding:
+                                          EdgeInsets.only(left: 2 * padding),
+                                      child: Text(AppLocalizations.of(context)!
+                                          .sale_by),
+                                    ),
+                                    DropdownButton<String>(
+                                      value: "one",
+                                      icon: const Icon(Icons.arrow_downward),
+                                      elevation: 16,
+                                      style: const TextStyle(
+                                          color: Colors.deepPurple),
+                                      underline: Container(
+                                        height: 2,
+                                        color: Colors.deepPurpleAccent,
+                                      ),
+                                      onChanged: (String? value) {
+                                        // This is called when the user selects an item.
+                                        setState(() {
+                                          soldBy = value!;
+                                        });
+                                      },
+                                      items: ["one", "two", "three"]
+                                          .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ))
+                          ],
+                        ),
                       ),
                     ),
                     //description

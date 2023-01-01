@@ -108,9 +108,11 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
                 ItemBill itemBill = ItemBill.fromJson(resItemBill.first);
                 ShowObject showObject = ShowObject(
                     value0: item.name,
-                    value1: item.count.toStringAsFixed(2),
+                    value1:
+                        '${itemBill.number.toStringAsFixed(2)}/${item.count.toString()}',
                     value3: itemBill.productDate,
-                    value2: itemsDepot.number.toString());
+                    value2: item.count.toString(),
+                    value4: itemsDepot.number.toStringAsFixed(2));
                 listShowObjectIn.add(showObject);
                 listItemIn.add(item);
               } else {
@@ -376,153 +378,156 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      children: [
-        SizedBox(
-          width: widget.size.width * 0.95,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Flex(
-                direction: Axis.horizontal,
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: Row(
-                      children: [
-                        Flexible(
-                          child: inputElementTable(
-                              needValidation: false,
-                              controller: null,
-                              hintText: searchFor,
-                              onChang: (value) {
+    return Center(
+      child: Wrap(
+        children: [
+          SizedBox(
+            width: widget.size.width * 0.95,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Flex(
+                  direction: Axis.horizontal,
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: inputElementTable(
+                                needValidation: false,
+                                controller: null,
+                                hintText: searchFor,
+                                onChang: (value) {
+                                  setState(() {
+                                    elementSearch = value!;
+                                    Log(
+                                        tag: "$tag elementSearch",
+                                        message:
+                                            "elementSearch: $elementSearch");
+                                  });
+                                },
+                                context: context),
+                          ),
+                          IconButton(
+                              icon: const Icon(Icons.search),
+                              onPressed: () async {
                                 setState(() {
-                                  elementSearch = value!;
-                                  Log(
-                                      tag: "$tag elementSearch",
-                                      message: "elementSearch: $elementSearch");
+                                  if (element == "") {
+                                    element = listSearchElement.first;
+                                  }
+                                  if (tableName == "") {
+                                    tableName = itemTableName;
+                                  }
                                 });
-                              },
-                              context: context),
-                        ),
-                        IconButton(
-                            icon: const Icon(Icons.search),
-                            onPressed: () async {
-                              setState(() {
-                                if (element == "") {
-                                  element = listSearchElement.first;
-                                }
-                                if (tableName == "") {
-                                  tableName = itemTableName;
-                                }
-                              });
 
-                              Log(
-                                  tag: tag,
-                                  message:
-                                      "search $elementSearch in $element, table name is: $tableName");
-                              // Search query
-                              await activateSearch();
-                            }),
-                      ],
+                                Log(
+                                    tag: tag,
+                                    message:
+                                        "search $elementSearch in $element, table name is: $tableName");
+                                // Search query
+                                await activateSearch();
+                              }),
+                        ],
+                      ),
                     ),
-                  ),
-                  DropdownButtonNew(
-                      initValue: initElementSearch,
-                      flex: 1,
-                      items: listSearchElement,
-                      icon: Icons.precision_manufacturing,
-                      onSelect: (value) {
-                        if (value!.isNotEmpty) {
-                          setState(() {
-                            initElementSearch = value;
-                            listShowObject = [];
-                            listItem == [];
-                            Log(
-                                tag: "$tag element item",
-                                message: "element: $value");
-                          });
-                        }
-                      }),
-                  Visibility(
-                    visible: widget.initObjectSearch == "",
-                    child: DropdownButtonNew(
-                        initValue: initObjectSearch,
+                    DropdownButtonNew(
+                        initValue: initElementSearch,
                         flex: 1,
-                        items: listObjectSearch,
-                        icon: Icons.search,
+                        items: listSearchElement,
+                        icon: Icons.precision_manufacturing,
                         onSelect: (value) {
-                          setState(() {
-                            initObjectSearch = value!;
-                            listShowObject = [];
-                            listItem == [];
-                            //["Item", "", "Worker", "Depot"];
-                          });
-                          searchFunctionConfig();
+                          if (value!.isNotEmpty) {
+                            setState(() {
+                              initElementSearch = value;
+                              listShowObject = [];
+                              listItem == [];
+                              Log(
+                                  tag: "$tag element item",
+                                  message: "element: $value");
+                            });
+                          }
                         }),
-                  ),
-                ],
+                    Visibility(
+                      visible: widget.initObjectSearch == "",
+                      child: DropdownButtonNew(
+                          initValue: initObjectSearch,
+                          flex: 1,
+                          items: listObjectSearch,
+                          icon: Icons.search,
+                          onSelect: (value) {
+                            setState(() {
+                              initObjectSearch = value!;
+                              listShowObject = [];
+                              listItem == [];
+                              //["Item", "", "Worker", "Depot"];
+                            });
+                            searchFunctionConfig();
+                          }),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        Visibility(
-          visible: listShowObject.isNotEmpty,
-          child: Expanded(
-              // result of search
-              child: SizedBox(
-            width: widget.size.width * 0.95,
-            height: widget.size.height * 0.35,
-            child: Card(
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  //shrinkWrap: true,
-                  itemCount: listShowObject.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                        leading: const Icon(Icons.precision_manufacturing),
-                        title: Text(listShowObject[index].value0),
-                        subtitle: Text(listShowObject[index].value1),
-                        enabled: true,
-                        onTap: () {
-                          if (tableName == itemTableName) {
-                            widget.getElement(listItems[index]);
-                            if (widget.billType == billOut) {
-                              widget.getIndex!(index);
+          Visibility(
+            visible: listShowObject.isNotEmpty,
+            child: Expanded(
+                // result of search
+                child: SizedBox(
+              width: widget.size.width * 0.95,
+              height: widget.size.height * 0.35,
+              child: Card(
+                child: ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    //shrinkWrap: true,
+                    itemCount: listShowObject.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ListTile(
+                          leading: const Icon(Icons.precision_manufacturing),
+                          title: Text(listShowObject[index].value0),
+                          subtitle: Text(listShowObject[index].value1),
+                          enabled: true,
+                          onTap: () {
+                            if (tableName == itemTableName) {
+                              widget.getElement(listItems[index]);
+                              if (widget.billType == billOut) {
+                                widget.getIndex!(index);
+                              }
+                              setState(() {
+                                listItems = [];
+                              });
+                            } else if (tableName == workerTableName) {
+                              widget.getElement(listWorker[index]);
+                              setState(() {
+                                listWorker = [];
+                              });
+                            } else if (tableName == supplierTableName) {
+                              widget.getElement(listSupplier[index]);
+                              setState(() {
+                                listSupplier = [];
+                              });
+                            } else if (tableName == depotTableName) {
+                              widget.getElement(listDepot[index]);
+                              setState(() {
+                                listDepot = [];
+                              });
+                            } else if (tableName == customerTableName) {
+                              widget.getElement(listSupplier[index]);
+                              setState(() {
+                                listSupplier = [];
+                              });
                             }
                             setState(() {
-                              listItems = [];
+                              listShowObject = [];
                             });
-                          } else if (tableName == workerTableName) {
-                            widget.getElement(listWorker[index]);
-                            setState(() {
-                              listWorker = [];
-                            });
-                          } else if (tableName == supplierTableName) {
-                            widget.getElement(listSupplier[index]);
-                            setState(() {
-                              listSupplier = [];
-                            });
-                          } else if (tableName == depotTableName) {
-                            widget.getElement(listDepot[index]);
-                            setState(() {
-                              listDepot = [];
-                            });
-                          } else if (tableName == customerTableName) {
-                            widget.getElement(listSupplier[index]);
-                            setState(() {
-                              listSupplier = [];
-                            });
-                          }
-                          setState(() {
-                            listShowObject = [];
                           });
-                        });
-                  }),
-            ),
-          )),
-        )
-      ],
+                    }),
+              ),
+            )),
+          )
+        ],
+      ),
     );
   }
 }

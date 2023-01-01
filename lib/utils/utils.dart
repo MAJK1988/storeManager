@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:store_manager/utils/objects.dart';
 import 'package:intl/intl.dart';
@@ -23,10 +24,12 @@ Widget inputElementTextFormField(
     required String labelText,
     TextEditingController? controller = null,
     bool hasValidate = true,
+    bool readOnly = false,
     required ValueChanged<String?> onChanged}) {
   return Padding(
     padding: EdgeInsets.all(padding),
     child: TextFormField(
+      readOnly: readOnly,
       controller: controller,
       minLines: minLine,
       maxLines: minLine + 4,
@@ -78,12 +81,14 @@ Widget inputElementDateFormField(
     IconData icon = Icons.date_range,
     String hintText = "",
     String labelText = "",
+    bool readOnly = false,
     required BuildContext context,
     required TextEditingController? controller,
     required ValueChanged<String?> onChanged}) {
   return Padding(
     padding: EdgeInsets.all(padding),
     child: TextFormField(
+      readOnly: readOnly,
       controller: controller,
       minLines: minLine,
       maxLines: minLine + 4,
@@ -167,11 +172,13 @@ Widget inputElementTable(
     required TextEditingController? controller,
     String hintText = "",
     bool needValidation = true,
+    bool readOnly = false,
     TextInputType textInputType = TextInputType.text}) {
   return Center(
       child: Padding(
     padding: const EdgeInsets.all(8.0),
     child: TextFormField(
+        readOnly: readOnly,
         onTap: () {
           if (ontap != null) {
             ontap(0);
@@ -392,6 +399,7 @@ addWorkersToDatabase({required int workersNumber}) async {
   for (int i = 0; i < workersNumber; i++) {
     int status = (Random().nextInt(4) + 1);
     Worker worker = Worker(
+        userIndex: 0,
         Id: 0,
         name: "WorkerName$i",
         password: "password$i",
@@ -643,5 +651,74 @@ Visibility getChart(
             ]),
       ),
     ),
+  );
+}
+
+void show_Dialog({
+  required BuildContext context,
+  required String title,
+  required String message,
+  required ValueChanged<bool> response,
+}) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            // TextButton widget is used to make a text to work like a button
+
+            onPressed: () {
+              Navigator.pop(context);
+              response(false);
+            }, // function used to perform after pressing the button
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              response(true);
+            },
+            child: Text(AppLocalizations.of(context)!.accept),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void show_Widget(
+    {required BuildContext context,
+    required String title,
+    required ValueChanged<bool> response,
+    required Widget widget}) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: widget,
+        actions: <Widget>[
+          TextButton(
+            // TextButton widget is used to make a text to work like a button
+
+            onPressed: () {
+              Navigator.pop(context);
+              response(false);
+            }, // function used to perform after pressing the button
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              response(true);
+            },
+            child: Text(AppLocalizations.of(context)!.accept),
+          ),
+        ],
+      );
+    },
   );
 }

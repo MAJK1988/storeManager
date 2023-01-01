@@ -84,7 +84,23 @@
       "validate_new_password":"تحقق من صحة كلمة المرور",
       "password":"كلمة المرور",
       "password1":"كلمة المرور1",
-      "email":"بريدك الإلكتروني"
+      "email":"بريدك الإلكتروني",
+      "manager":"مدير المحل",
+      "manager_item":"مدير المواد",
+      "threshold":"حد الادنى",
+      "accept":"قبول", 
+      "cancel":"إلغاء",
+      "delete_message":"تريد أن تحذف؟",
+      "edit_message":"هل تريد أن تعدل؟",
+      "delete":"حذف", 
+       "edit":"تعديل",
+      "bill_details":"تفاصيل الفاتورة",
+      "save_message": "هل ترغب في حفظ الكائن؟",
+      "save_title": "حفظ",
+      "add_account":"إنشاء حساب" ,
+      "assistant":"مساعد", 
+      "director":"مدير",
+      "seller":"بائع"
      
 
 

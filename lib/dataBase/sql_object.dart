@@ -128,8 +128,8 @@ class DBProvider {
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
     var raw = await db.rawInsert(
-        "INSERT Into $workerTableName (id,name,address,phoneNumber, email, password,startTime, endTime,status, salary)"
-        " VALUES (?,?,?,?,?,?,?,?,?,?)",
+        "INSERT Into $workerTableName (id,name,address,phoneNumber, email, password,startTime, endTime,status, salary,userIndex)"
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         [
           id,
           worker.name,
@@ -140,9 +140,60 @@ class DBProvider {
           worker.startTime,
           worker.endTime,
           worker.status,
-          worker.salary
+          worker.salary,
+          worker.userIndex
         ]);
     return id;
+  }
+
+  addNewItemNbSetting({required ItemSettingNb itemSettingNb}) async {
+    final db = await database;
+    late String tag = "addNewItemNbSetting";
+    Log(tag: tag, message: "Start function");
+    bool tableExist = await checkExistTable(tableName: settingItemNbTableName);
+    if (!tableExist) {
+      Log(
+          tag: tag,
+          message:
+              "table not exist, Try to create table ${itemSettingNb.createSqlTable()}");
+      await creatTable(settingItemNbTableName, itemSettingNb.createSqlTable());
+    }
+    /** "itemId INTEGER PRIMARY KEY,"
+        "countLimit REAL" */
+    var raw = await db.rawInsert(
+        "INSERT Into $settingItemNbTableName (id, itemId,countLimit)"
+        " VALUES (?,?,?)",
+        [itemSettingNb.itemId, itemSettingNb.itemId, itemSettingNb.countLimit]);
+    return raw;
+  }
+
+  addNewItemCategory({required ItemCategory itemCategory}) async {
+    final db = await database;
+    late String tag = "addNewItemCategory", tableName = itemCategoryTableName;
+
+    Log(tag: tag, message: "Start function");
+    bool tableExist = await checkExistTable(tableName: tableName);
+    if (!tableExist) {
+      await creatTable(tableName, itemCategory.createSqlTable());
+    }
+    //get the biggest id in the table
+    List<Map<String, Object?>> table;
+    table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
+    int id;
+    (table.first['id']).toString();
+    // ignore: prefer_is_empty
+    (table.first.isEmpty)
+        ? id = 0
+        : (table.first['id'] == null)
+            ? id = 0
+            : id = int.parse((table.first['id']).toString());
+    /** "itemId INTEGER PRIMARY KEY,"
+        "countLimit REAL" */
+    var raw = await db.rawInsert(
+        "INSERT Into $tableName (id, name)"
+        " VALUES (?,?)",
+        [id, itemCategory.name]);
+    return raw;
   }
 
 /** */
@@ -605,13 +656,15 @@ class DBProvider {
   }
 
   getDepotBillOutItems(
-      {required String tableName, required int itemDepotId}) async {
+      {required String tableName,
+      required int itemDepotId,
+      required int itemBillInId}) async {
     // An function that return all item in data base
     bool existTable = await checkExistTable(tableName: tableName);
     if (existTable) {
       final db = await database;
       String query =
-          "SELECT * FROM $tableName WHERE itemDepotId = $itemDepotId";
+          "SELECT * FROM $tableName WHERE itemDepotId = $itemDepotId AND itemBillInId = $itemBillInId";
       return await db.rawQuery(query);
     } else {
       return [];
@@ -725,15 +778,17 @@ class DBProvider {
     }
   }
 
-  getObject({required int id, required String tableName}) async {
+  getObject(
+      {required int id, required String tableName, String value = "id"}) async {
     final db = await database;
     bool existTable = await checkExistTable(tableName: tableName);
     if (existTable) {
-      return await db.query(tableName, where: "id = ?", whereArgs: [id]);
+      return await db.query(tableName, where: "$value = ?", whereArgs: [id]);
     } else {
       return [];
     }
   }
+
   /* billOutId: id,
                 billOutItemId: idBillItem,*/
 

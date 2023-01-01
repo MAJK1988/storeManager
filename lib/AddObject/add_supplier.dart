@@ -163,6 +163,7 @@ class _SupplierWidgetState extends State<SupplierWidget>
                   right: padding, left: padding, bottom: padding),
               child: Row(
                 children: <Widget>[
+                  //name
                   Flexible(
                     child: inputElementTextFormField(
                         controller: nameControl,
@@ -468,6 +469,7 @@ class _SupplierWidgetState extends State<SupplierWidget>
                         if (!(hasPhoneNumber || hasEmail) ||
                             widget.worker != null) {
                           Worker worker = Worker(
+                              userIndex: 0,
                               Id: widget.worker == null ? 0 : widget.worker!.Id,
                               name: name,
                               address: address,

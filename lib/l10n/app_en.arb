@@ -77,7 +77,7 @@
     "@ratio_text": {
       "description": "A programmer greeting"
     },
-    "item_category": "Item category: ",
+    "item_category": "Item category ",
     "@item_category": {
       "description": "A programmer greeting"
     },
@@ -99,6 +99,14 @@
     },
     "save": "Click here to save! ",
     "@save": {
+      "description": "A programmer greeting"
+    },
+    "save_title": "Save Object ",
+    "@save_title": {
+      "description": "A programmer greeting"
+    },
+    "save_message": "Do you want to save the object?",
+    "@save_message": {
       "description": "A programmer greeting"
     },
     "sale_by": "sale by:  ",
@@ -281,7 +289,7 @@
       "language":"Language",
       "@language": {
       "description": "A programmer greeting"},
-      "settings":"settings",
+      "settings":"Settings",
       "@settings": {
       "description": "A programmer greeting"},
       "common":"Common",
@@ -322,7 +330,52 @@
       "description": "A programmer greeting"},
       "email":"Email",
       "@email": {
+      "description": "A programmer greeting"},
+      "manager":"Store manager",
+      "@manager": {
+      "description": "A programmer greeting"},
+      "manager_item":"Items manager",
+      "@manager_item": {
+      "description": "A programmer greeting"},
+      "threshold":"Threshold",
+      "@threshold": {
+      "description": "A programmer greeting"},
+      "cancel":"CANCEL",
+      "@cancel": {
+      "description": "A programmer greeting"},
+      "accept":"ACCEPT", 
+      "@accept": {
+      "description": "A programmer greeting"},
+      "delete_message":"Want you to delete?", 
+      "@delete_message": {
+      "description": "A programmer greeting"},
+      "edit_message":"Want you to edit?", 
+      "@edit_message": {
+      "description": "A programmer greeting"},
+      "delete":"Delete", 
+      "@delete": {
+      "description": "A programmer greeting"},
+      "edit":"Edit", 
+      "@edit": {
+      "description": "A programmer greeting"},
+      "bill_details":"Bill details", 
+      "@bill_details": {
+      "description": "A programmer greeting"},
+      "add_account":"Add account", 
+      "@add_account": {
+      "description": "A programmer greeting"},
+      "assistant":"Assistant", 
+      "@assistant": {
+      "description": "A programmer greeting"},
+      "director":"Director", 
+      "@director": {
+      "description": "A programmer greeting"},
+      "seller":"Seller", 
+      "@seller": {
       "description": "A programmer greeting"}
+
+
+
 
       
   

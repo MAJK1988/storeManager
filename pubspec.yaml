@@ -47,6 +47,7 @@ dependencies:
   pdf: ^3.8.4
   printing: ^5.9.3
   settings_ui: ^2.0.2
+  overlay_loading_progress: ^1.0.0
   
 dependency_overrides:
   intl: 0.18.0

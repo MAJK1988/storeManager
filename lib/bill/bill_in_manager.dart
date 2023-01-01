@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:overlay_loading_progress/overlay_loading_progress.dart';
 import 'package:store_manager/utils/objects.dart';
 
 import '../dataBase/bill_in_sql.dart';
@@ -301,14 +302,25 @@ class _BillInManagerState extends State<BillInManager> {
           });
           for (var jsonBillOutItem in resDateSearchBillOutItem) {
             setState(() {
-              ItemBillOut itemBillOut = ItemBillOut.fromJson(jsonBillOutItem);
+              if (widget.typeBill == billOut) {
+                ItemBillOut itemBillOut = ItemBillOut.fromJson(jsonBillOutItem);
 
-              showItemBillObject.add(ShowObject(
-                  value0: itemBillOut.IDItem.toString(),
-                  value1: itemBillOut.productDate,
-                  value2: itemBillOut.number.toStringAsFixed(2),
-                  value3: itemBillOut.price.toStringAsFixed(2),
-                  value4: itemBillOut.depotID.toString()));
+                showItemBillObject.add(ShowObject(
+                    value0: itemBillOut.IDItem.toString(),
+                    value1: itemBillOut.productDate,
+                    value2: itemBillOut.number.toStringAsFixed(2),
+                    value3: itemBillOut.price.toStringAsFixed(2),
+                    value4: itemBillOut.depotID.toString()));
+              } else {
+                ItemBill itemBill = ItemBill.fromJson(jsonBillOutItem);
+
+                showItemBillObject.add(ShowObject(
+                    value0: itemBill.IDItem.toString(),
+                    value1: itemBill.productDate,
+                    value2: itemBill.number.toStringAsFixed(2),
+                    value3: itemBill.price.toStringAsFixed(2),
+                    value4: itemBill.depotID.toString()));
+              }
             });
           }
         } else {
@@ -320,28 +332,51 @@ class _BillInManagerState extends State<BillInManager> {
     }
   }
 
+  initUI({bool notFirst = true}) async {
+    if (notFirst) {
+      setState(() {
+        bills = [];
+        works = [];
+        suppliers = [];
+        showObject = [];
+        showItemBillObject = [];
+        indexBill = 0;
+        indexBillItem = 0;
+      });
+      OverlayLoadingProgress.start(context);
+    }
+    await getAllBillIn();
+    if (bills.isNotEmpty) {
+      Bill b = bills[0];
+
+      await getItemBill(bill: b);
+    }
+    if (notFirst) {
+      OverlayLoadingProgress.stop();
+    }
+  }
+
+  bool actionIsVisible = false, billItemsIsVisible = true;
   @override
   void initState() {
     // TODO: implement initState
     () async {
-      await getAllBillIn();
-      if (bills.isNotEmpty) {
-        Bill b = bills[0];
-
-        await getItemBill(bill: b);
-      }
+      await initUI(notFirst: false);
     }();
     super.initState();
   }
 
   late List<String> listSearchElement = getElementsBill();
   late String initElementSearch = getElementsBill().first;
+
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.bill_manager),
         centerTitle: true,
+        actions: [Visibility(visible: actionIsVisible, child: popMenuAction())],
       ),
       body: Center(
         child: Row(
@@ -375,173 +410,176 @@ class _BillInManagerState extends State<BillInManager> {
                           }),
                     ],
                   ),
-                  Expanded(
-                      child: Card(
-                    child: ListView.builder(
-                      itemCount: showObject.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          color: index == indexBill
-                              ? Colors.blue.shade100
-                              : Colors.blue.shade50,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ListTile(
-                              leading: Text(
-                                  '${AppLocalizations.of(context)!.supplier}: ${showObject[index].value1}'),
-                              title: Text(
-                                  '${AppLocalizations.of(context)!.date}: ${showObject[index].value0}'),
-                              subtitle: Text(
-                                  '${AppLocalizations.of(context)!.worker}: ${showObject[index].value2}'),
-                              trailing: Stack(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 30),
-                                    child: Text(
-                                      '${AppLocalizations.of(context)!.price}: ${showObject[index].value3} \$',
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    top: -10,
-                                    child: Align(
-                                      alignment: Alignment.topRight,
-                                      child: IconButton(
-                                          iconSize: 20,
-                                          icon: const Icon(Icons.delete),
-                                          onPressed: () async {
-                                            Log(
-                                                tag: tag,
-                                                message:
-                                                    "Try to launch delete bill process");
-                                            Bill b = bills[index];
-                                            if (widget.typeBill == billOut) {
-                                              await deleteBillOut(
-                                                  bill: b, tagMain: tag);
-                                            } else {
-                                              await deleteBillIn(
-                                                  bill: b, tagMain: tag);
-                                            }
-                                          }),
-                                    ),
-                                  ),
-                                ],
+                  Center(
+                      child: SizedBox(
+                    width: size.width * 0.95,
+                    height: size.height * 0.8,
+                    child: Card(
+                      child: ListView.builder(
+                        itemCount: showObject.length,
+                        itemBuilder: (context, index) {
+                          return Column(
+                            children: [
+                              Card(
+                                color: index == indexBill
+                                    ? Colors.blue.shade100
+                                    : Colors.blue.shade50,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ListTile(
+                                      leading: Text(
+                                        '${AppLocalizations.of(context)!.supplier}:\n${showObject[index].value1}',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      title:
+                                          Text(' ${showObject[index].value0}'),
+                                      subtitle: Text(
+                                          '${AppLocalizations.of(context)!.worker}: ${showObject[index].value2}'),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 30),
+                                        child: Text(
+                                          '${AppLocalizations.of(context)!.price}: ${showObject[index].value3} \$',
+                                        ),
+                                      ),
+                                      onTap: () async {
+                                        Log(
+                                            tag: tag,
+                                            message:
+                                                "Try to get item bill of $index bill");
+                                        if (index < bills.length) {
+                                          setState(() {
+                                            showItemBillObject.clear();
+                                            indexBill = index;
+                                            billItemsIsVisible = true;
+                                          });
+                                          Bill b = bills[index];
+                                          await getItemBill(bill: b);
+                                        }
+                                      },
+                                      onLongPress: (() {
+                                        setState(() {
+                                          indexBill = index;
+                                          actionIsVisible = true;
+                                          billItemsIsVisible = true;
+                                        });
+                                      })),
+                                ),
                               ),
-                              onTap: () async {
-                                Log(
-                                    tag: tag,
-                                    message:
-                                        "Try to get item bill of $index bill");
-                                if (index < bills.length) {
-                                  setState(() {
-                                    showItemBillObject.clear();
-                                    indexBill = index;
-                                  });
-                                  Bill b = bills[index];
-                                  await getItemBill(bill: b);
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      },
+                              Visibility(
+                                visible:
+                                    indexBill == index && billItemsIsVisible,
+                                child: SizedBox(
+                                    width: size.width * 0.85,
+                                    height: size.height * 0.6,
+                                    child: Column(
+                                      children: [
+                                        Flexible(
+                                          flex: 1,
+                                          child: SizedBox(
+                                            width: size.width * 0.85,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                    " ${AppLocalizations.of(context)!.bill_details}: ",
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  IconButton(
+                                                      color: Colors.blue,
+                                                      iconSize: 20,
+                                                      icon: const Icon(
+                                                          Icons.highlight_off),
+                                                      onPressed: () {
+                                                        Log(
+                                                            tag: tag,
+                                                            message:
+                                                                "try to hide bill details");
+                                                        setState(() {
+                                                          billItemsIsVisible =
+                                                              false;
+                                                        });
+                                                      }),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Flexible(
+                                          flex: 6,
+                                          child: Card(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15.0),
+                                              side: const BorderSide(
+                                                color: Colors.blue,
+                                                width: 2.0,
+                                              ),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: ListView.builder(
+                                                itemCount:
+                                                    showItemBillObject.length,
+                                                itemBuilder: (context, index) {
+                                                  return Card(
+                                                    color: Colors.blue.shade100,
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: ListTile(
+                                                        title: Text(
+                                                            '${AppLocalizations.of(context)!.name}: ${showItemBillObject[index].value0}'),
+                                                        subtitle: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8.0),
+                                                          child: Text(
+                                                              '${AppLocalizations.of(context)!.count}: ${showItemBillObject[index].value2}'),
+                                                        ),
+                                                        trailing: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  right: 30),
+                                                          child: Text(
+                                                            '${AppLocalizations.of(context)!.price}: ${showItemBillObject[index].value3} \$',
+                                                          ),
+                                                        ),
+                                                        onTap: () {
+                                                          setState(() {
+                                                            indexBillItem =
+                                                                index;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    )),
+                              )
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   )),
                 ],
               ),
             ),
             // Show bill item
-            Flexible(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: inputElementTable(
-                            controller: null,
-                            hintText: searchFor,
-                            onChang: (value) {},
-                            context: context),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: () {},
-                      ),
-                      DropdownButtonNew(
-                          initValue: initElementSearch,
-                          flex: 1,
-                          items: listSearchElement,
-                          icon: Icons.fact_check,
-                          onSelect: (value) {
-                            if (value!.isNotEmpty) {
-                              setState(() {});
-                            }
-                          }),
-                    ],
-                  ),
-                  Expanded(
-                      child: Card(
-                    child: ListView.builder(
-                      itemCount: showItemBillObject.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          color: index == indexBillItem
-                              ? Colors.blue.shade100
-                              : Colors.blue.shade50,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ListTile(
-                              leading: Text(
-                                  '${AppLocalizations.of(context)!.name}: ${showItemBillObject[index].value0}'),
-                              title: Text(
-                                  '${AppLocalizations.of(context)!.date}: ${showItemBillObject[index].value1}'),
-                              subtitle: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                        '${AppLocalizations.of(context)!.count}: ${showItemBillObject[index].value2}'),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                        '${AppLocalizations.of(context)!.depot}: ${showItemBillObject[index].value4}'),
-                                  ),
-                                ],
-                              ),
-                              trailing: Stack(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 30),
-                                    child: Text(
-                                      '${AppLocalizations.of(context)!.price}: ${showItemBillObject[index].value3} \$',
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    top: -10,
-                                    child: Align(
-                                      alignment: Alignment.topRight,
-                                      child: IconButton(
-                                          iconSize: 20,
-                                          icon: const Icon(Icons.delete),
-                                          onPressed: () {}),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              onTap: () {
-                                setState(() {
-                                  indexBillItem = index;
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  )),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -571,5 +609,69 @@ class _BillInManagerState extends State<BillInManager> {
               context: context);
         }
     }
+  }
+
+  popMenuAction() {
+    return PopupMenuButton(
+      // add icon, by default "3 dot" icon
+      // icon: Icon(Icons.book)
+      itemBuilder: (context) {
+        return [
+          /*PopupMenuItem<int>(
+            value: 0,
+            child: Center(
+              child: IconButton(
+                  color: Colors.blue,
+                  iconSize: 20,
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    if (actionIsVisible) {
+                      setState(() {
+                        actionIsVisible = false;
+                      });
+                    }
+                  }),
+            ),
+          ),*/
+          PopupMenuItem<int>(
+            value: 1,
+            child: Center(
+              child: IconButton(
+                  color: Colors.blue,
+                  iconSize: 20,
+                  icon: const Icon(Icons.delete),
+                  onPressed: () async {
+                    if (actionIsVisible) {
+                      setState(() {
+                        actionIsVisible = false;
+                      });
+                      show_Dialog(
+                          context: context,
+                          title: AppLocalizations.of(context)!.delete,
+                          message: AppLocalizations.of(context)!.delete_message,
+                          response: ((value) async {
+                            if (value) {
+                              Log(
+                                  tag: tag,
+                                  message:
+                                      "Try to launch delete bill process ${widget.typeBill}");
+                              OverlayLoadingProgress.start(context);
+                              Bill b = bills[indexBill];
+                              if (widget.typeBill == billOut) {
+                                await deleteBillOut(bill: b, tagMain: tag);
+                              } else {
+                                await deleteBillIn(bill: b, tagMain: tag);
+                              }
+                              OverlayLoadingProgress.stop();
+                              await initUI();
+                            }
+                          }));
+                    }
+                  }),
+            ),
+          ),
+        ];
+      },
+    );
   }
 }

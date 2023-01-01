@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:store_manager/setting/add_account.dart';
 import 'package:store_manager/setting/change_password.dart';
+import 'package:store_manager/setting/setting_item.dart';
 
 import '../auth/Screens/Login/login_screen.dart';
 import '../auth/services/Login/login_ctr.dart';
@@ -180,19 +182,30 @@ class _SettingWidgetState extends State<SettingWidget> {
               ),
             ],
           ),
-          /* SettingsSection(
-            title: Text('Misc'),
+          SettingsSection(
+            title: Text(AppLocalizations.of(context)!.manager),
             tiles: <SettingsTile>[
               SettingsTile.navigation(
-                leading: Icon(Icons.description),
-                title: Text('Terms of Service'),
+                leading: const Icon(Icons.manage_search_sharp),
+                title: Text(AppLocalizations.of(context)!.manager_item),
+                onPressed: (context) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => const SettingItem()),
+                  );
+                },
               ),
               SettingsTile.navigation(
-                leading: Icon(Icons.collections_bookmark),
-                title: Text('Open source license'),
+                leading: const Icon(Icons.person_add),
+                title: Text(AppLocalizations.of(context)!.add_account),
+                onPressed: (context) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const AddAccount()),
+                  );
+                },
               ),
             ],
-          ),*/
+          ),
         ],
       ),
     );

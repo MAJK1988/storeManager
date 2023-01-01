@@ -248,6 +248,7 @@ const String supplierType = "Supplier",
     customerType = "Customer",
     workerType = "Worker",
     depotType = "Depot",
+    itemType = "Item",
     customerTableName = "CustomersTable",
     supplierTableName = "SuppliersTable",
     workerTableName = "WorkersTable",
@@ -259,7 +260,9 @@ const String supplierType = "Supplier",
     itemTableName = "ItemsTableDSC1",
     billIn = "BillIn",
     userTableName = "UsersTableName",
-    billOut = "BillOut";
+    billOut = "BillOut",
+    settingItemNbTableName = "settingItemNbTableName4",
+    itemCategoryTableName = "settingItemNbTableName4";
 
 Supplier initSupplier() {
   return Supplier(
@@ -605,6 +608,7 @@ List<String> getObjectsNameListAddBillOut() {
 
 Worker initWorker() {
   return Worker(
+      userIndex: 0,
       password: "123",
       Id: -1,
       name: "name-1",
@@ -629,6 +633,7 @@ class Worker {
   late String startTime;
   late String endTime;
   late int status;
+  late int userIndex;
   late double salary;
 
   Worker(
@@ -641,6 +646,7 @@ class Worker {
       required this.startTime,
       required this.endTime,
       required this.status,
+      required this.userIndex,
       required this.salary});
   // read worker from json object
   Worker.fromJson(Map<String, dynamic> json) {
@@ -655,6 +661,7 @@ class Worker {
     status = json['status'];
     salary = json['salary'];
     startTime = json['startTime'];
+    userIndex = json['userIndex'];
   }
   //from json to Depot
   Map<String, dynamic> toJson() {
@@ -669,11 +676,13 @@ class Worker {
     _data['endTime'] = endTime;
     _data['status'] = status;
     _data['salary'] = salary;
+    _data['userIndex'] = userIndex;
     return _data;
   }
 
   Worker init() {
     return Worker(
+        userIndex: 0,
         Id: -1,
         name: "",
         address: "",
@@ -698,7 +707,8 @@ class Worker {
         "startTime DATE NOT NULL,"
         "endTime DATE,"
         "status INTEGER,"
-        "salary REAL"
+        "salary REAL,"
+        "userIndex INTEGER"
         ")";
   }
 }
@@ -857,6 +867,7 @@ class BillOutDepot {
   late int billOutId;
   late int billOutItemId;
   late int itemDepotId;
+  late int itemBillInId;
   late final double number;
 
   BillOutDepot(
@@ -864,7 +875,8 @@ class BillOutDepot {
       required this.billOutId,
       required this.billOutItemId,
       required this.number,
-      required this.itemDepotId});
+      required this.itemDepotId,
+      required this.itemBillInId});
 
   BillOutDepot.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -872,6 +884,7 @@ class BillOutDepot {
     billOutItemId = json['billOutItemId'];
     number = json['number'];
     itemDepotId = json['itemDepotId'];
+    itemBillInId = json['itemBillInId'];
   }
   //from json to ItemsDepot
   Map<String, dynamic> toJson() {
@@ -881,7 +894,7 @@ class BillOutDepot {
     _data['billOutItemId'] = billOutItemId;
     _data['number'] = number;
     _data['itemDepotId'] = itemDepotId;
-
+    _data['itemBillInId'] = itemBillInId;
     return _data;
   }
 
@@ -892,7 +905,8 @@ class BillOutDepot {
         "billOutId INTEGER,"
         "billOutItemId INTEGER,"
         "number REAL,"
-        "itemDepotId INTEGER"
+        "itemDepotId INTEGER,"
+        "itemBillInId INTEGER"
         ")";
   }
 }
@@ -969,7 +983,9 @@ class ShowObject {
     value1 = json['actualPrice'].toStringAsFixed(2);
     value2 = json['category'];
     value3 = json['madeIn'];
+    value4 = json['count'].toStringAsFixed(2);
   }
+
   ShowObject.fromJsonWorker(Map<String, dynamic> json) {
     value0 = json['name'];
     value1 = json['address'];
@@ -1006,4 +1022,53 @@ class ChartData {
   ChartData(this.x, this.y);
   final String x;
   final double? y;
+}
+
+class ItemSettingNb {
+  late final int itemId;
+  late double countLimit;
+  ItemSettingNb({required this.itemId, required this.countLimit});
+  ItemSettingNb.fromJson(Map<String, dynamic> json) {
+    itemId = json['itemId'];
+    countLimit = json['countLimit'];
+  }
+  Map<String, dynamic> toJson() {
+    final _data = <String, dynamic>{};
+    _data['itemId'] = itemId;
+    _data['countLimit'] = countLimit;
+    return _data;
+  }
+
+  // Create sql table
+  String createSqlTable() {
+    return "CREATE TABLE $settingItemNbTableName ("
+        "id INTEGER PRIMARY KEY,"
+        "itemId INTEGER,"
+        "countLimit REAL"
+        ")";
+  }
+}
+
+class ItemCategory {
+  late final int id;
+  late final String name;
+  ItemCategory({required this.id, required this.name});
+  ItemCategory.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    name = json['name'];
+  }
+  Map<String, dynamic> toJson() {
+    final _data = <String, dynamic>{};
+    _data['id'] = id;
+    _data['name'] = name;
+    return _data;
+  }
+
+  // Create sql table
+  String createSqlTable() {
+    return "CREATE TABLE $itemCategoryTableName ("
+        "id INTEGER PRIMARY KEY,"
+        "name TEXT"
+        ")";
+  }
 }

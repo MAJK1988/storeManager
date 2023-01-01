@@ -249,6 +249,8 @@ addNewBillOut(
           await addNewBillOutDepot(
               billOutDepot: BillOutDepot(
                   id: id,
+                  itemBillInId:
+                      listSelectedItemsDepot[depotItemIndexList[i]].itemBillId,
                   billOutId: id,
                   billOutItemId: idBillItem,
                   number: listItemOutBill[i].number,
@@ -264,8 +266,11 @@ addNewBillOut(
               tableName: selectedDepot.depotListItem,
               id: listSelectedItemsDepot[depotItemIndexList[i]].id);
           var billOutDepotItems = await DBProvider.db.getDepotBillOutItems(
-              tableName: selectedDepot.depotListOutItem,
-              itemDepotId: listSelectedItemsDepot[depotItemIndexList[i]].id);
+            tableName: selectedDepot.depotListOutItem,
+            itemDepotId: listSelectedItemsDepot[depotItemIndexList[i]].id,
+            itemBillInId:
+                listSelectedItemsDepot[depotItemIndexList[i]].itemBillId,
+          );
           if (billOutDepotItems.isNotEmpty) {
             for (var jsonDepotOut in billOutDepotItems) {
               Log(tag: tag, message: "Delete BillOutDepot!!");
@@ -414,19 +419,23 @@ addNewBillOutDepot(
 
   Log(tag: tag, message: "Index is:  $id");
   var raw = await db.rawInsert(
-      "INSERT Into $tableName (id,billOutId,billOutItemId, number,itemDepotId)"
-      " VALUES (?,?,? ,?,?)",
+      "INSERT Into $tableName (id,billOutId,billOutItemId, number,itemDepotId,itemBillInId)"
+      " VALUES (?,?,? ,?,?,?)",
       [
         id,
         billOutDepot.billOutId,
         billOutDepot.billOutItemId,
         billOutDepot.number,
-        billOutDepot.itemDepotId
+        billOutDepot.itemDepotId,
+        billOutDepot.itemBillInId
       ]);
   return raw;
 }
 
-deleteBillOut({required Bill bill, required String tagMain}) async {
+deleteBillOut(
+    {required Bill bill,
+    required String tagMain,
+    bool isUniqueDepot = true}) async {
   String tag = " $tagMain/deleteBillOut";
   if (bill.type == billOut) {
     Log(tag: tag, message: "Start function, try to get bill out items");
@@ -441,9 +450,16 @@ deleteBillOut({required Bill bill, required String tagMain}) async {
           .getObject(id: itemBillOut.depotID, tableName: depotTableName);
       var reItem = await DBProvider.db
           .getObject(id: itemBillOut.IDItem, tableName: itemTableName);
-      if (resDepot.isNotEmpty && reItem.isNotEmpty) {
+      Log(
+          tag: tag,
+          message:
+              "resDepot.isNotEmpty: ${resDepot.isNotEmpty}  reItem.isNotEmpty: ${reItem.isNotEmpty} itemBillOut.depotID: ${itemBillOut.depotID}");
+      if ((resDepot.isNotEmpty || isUniqueDepot) && reItem.isNotEmpty) {
         Item item = Item.fromJson(reItem.first);
-        Depot depot = Depot.fromJson(resDepot.first);
+        Depot depot = initDepot();
+        if (!isUniqueDepot) {
+          depot = Depot.fromJson(resDepot.first);
+        }
         Log(
             tag: tag,
             message:
@@ -558,7 +574,9 @@ deleteBillIn(
             ItemsDepot itemDepot = ItemsDepot.fromJson(resDepotItem.first);
             Log(tag: tag, message: "Try to get bill out depot");
             var resBillOutDepot = await DBProvider.db.getDepotBillOutItems(
-                tableName: depot.depotListOutItem, itemDepotId: itemDepot.id);
+                tableName: depot.depotListOutItem,
+                itemDepotId: itemDepot.id,
+                itemBillInId: itemDepot.itemBillId);
             if (resBillOutDepot.isNotEmpty) {
               Log(
                   tag: tag,
@@ -834,5 +852,23 @@ generateBillOutMonth({required int month, required year}) async {
     for (int i = 0; i < (Random().nextInt(15) + 8); i++) {
       await generateBillOut(month: month, year: year, day: j);
     }
+  }
+}
+
+getAllBillOutDepotItem(
+    {required String tableName, required int itemDepotId}) async {
+  String tag = "getAllBillOutDepotItem";
+  // table name  "itemBills${bill.type}$id"
+  Log(tag: tag, message: "Activate Function");
+  final db = await DBProvider.db.database;
+  //get the biggest id in the table
+  List<Map<String, Object?>> table;
+
+  bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
+  if (tableExist) {
+    String query = "SELECT * FROM $tableName WHERE itemDepotId = $itemDepotId";
+    return await db.rawQuery(query);
+  } else {
+    return [];
   }
 }

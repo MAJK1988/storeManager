@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:overlay_loading_progress/overlay_loading_progress.dart';
 import 'package:store_manager/pdf/print_invoice.dart';
 import 'package:store_manager/utils/objects.dart';
 
@@ -73,6 +74,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                   searchVisibility = !searchVisibility;
                 });
               },
+              readOnly: true,
               onChang: (value) {},
               context: context),
         )),
@@ -258,6 +260,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                 });
                 // searchFunctionConfig();
               },
+              readOnly: true,
               onChang: (value) {},
               context: context),
         )),
@@ -315,6 +318,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                   ),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
+                      OverlayLoadingProgress.start(context);
                       double availableItem = -1.1;
 
                       // searchInListItemDepot(number: double.parse(numberController.text));
@@ -429,6 +433,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                           });
                         }
                       }
+                      OverlayLoadingProgress.stop();
                     }
                     //addItemBillIns();
                   }),
@@ -553,6 +558,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                   Expanded(
                                     flex: 1,
                                     child: inputElementDateFormField(
+                                        readOnly: true,
                                         controller: billInDateController,
                                         context: context,
                                         padding: padding,
@@ -589,6 +595,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                             ),
                                             Flexible(
                                               child: inputElementTable(
+                                                  readOnly: true,
                                                   controller:
                                                       supplierController,
                                                   ontap: (value) {
@@ -635,6 +642,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                             ),
                                             Flexible(
                                               child: inputElementTable(
+                                                  readOnly: true,
                                                   controller: workerController,
                                                   ontap: (value) {
                                                     setState(() {
@@ -659,6 +667,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                             : Column(
                                 children: [
                                   inputElementDateFormField(
+                                      readOnly: true,
                                       controller: billInDateController,
                                       context: context,
                                       padding: padding,
@@ -690,6 +699,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                           ),
                                           Flexible(
                                             child: inputElementTable(
+                                                readOnly: true,
                                                 controller: supplierController,
                                                 ontap: (value) {
                                                   setState(() {
@@ -732,6 +742,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                           ),
                                           Flexible(
                                             child: inputElementTable(
+                                                readOnly: true,
                                                 controller: workerController,
                                                 ontap: (value) {
                                                   setState(() {
@@ -870,109 +881,145 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                     ),
                                     hoverColor: Colors.blue.shade50,
                                     onPressed: () async {
-                                      if (widget.billType == billIn) {
-                                        Log(
-                                            tag: tag,
-                                            message: "Start bill save");
-                                        if (listSelectedItems.isNotEmpty &&
-                                            selectedSupplier.Id != -1 &&
-                                            billInDateController
-                                                .text.isNotEmpty &&
-                                            listShowObjectMainTable
-                                                .isNotEmpty) {
-                                          Bill bill = Bill(
-                                              ID: 0,
-                                              depotId: "",
-                                              dateTime: billInDateController
-                                                  .text
-                                                  .toString(),
-                                              outsidePersonId:
-                                                  selectedSupplier.Id,
-                                              type: widget.billType,
-                                              workerId: selectedWorker.Id,
-                                              itemBills: "",
-                                              totalPrices: toTalPrice);
-                                          await addNewBillIn(
-                                              bill: bill,
-                                              isUniqueDepot: true,
-                                              listItemBill: itemBillIns);
-                                          setState(() {
-                                            itemBillIns.clear();
-                                            listShowObjectMainTable.clear();
-                                            selectedSupplier =
-                                                selectedSupplier.init();
-                                            selectedWorker =
-                                                selectedWorker.init();
+                                      show_Dialog(
+                                          context: context,
+                                          title: AppLocalizations.of(context)!
+                                              .save_title,
+                                          message: AppLocalizations.of(context)!
+                                              .save_message,
+                                          response: ((value) async {
+                                            if (value) {
+                                              OverlayLoadingProgress.start(
+                                                  context);
+                                              if (widget.billType == billIn) {
+                                                Log(
+                                                    tag: tag,
+                                                    message: "Start bill save");
+                                                if (listSelectedItems
+                                                        .isNotEmpty &&
+                                                    selectedSupplier.Id != -1 &&
+                                                    billInDateController
+                                                        .text.isNotEmpty &&
+                                                    listShowObjectMainTable
+                                                        .isNotEmpty) {
+                                                  Bill bill = Bill(
+                                                      ID: 0,
+                                                      depotId: "",
+                                                      dateTime:
+                                                          billInDateController
+                                                              .text
+                                                              .toString(),
+                                                      outsidePersonId:
+                                                          selectedSupplier.Id,
+                                                      type: widget.billType,
+                                                      workerId:
+                                                          selectedWorker.Id,
+                                                      itemBills: "",
+                                                      totalPrices: toTalPrice);
+                                                  await addNewBillIn(
+                                                      bill: bill,
+                                                      isUniqueDepot: true,
+                                                      listItemBill:
+                                                          itemBillIns);
+                                                  setState(() {
+                                                    itemBillIns.clear();
+                                                    listShowObjectMainTable
+                                                        .clear();
+                                                    selectedSupplier =
+                                                        selectedSupplier.init();
+                                                    selectedWorker =
+                                                        selectedWorker.init();
 
-                                            toTalPrice = 0.0;
-                                            supplierController.text = "";
-                                            workerController.text = "";
-                                            billInDateController.text = "";
-                                          });
+                                                    toTalPrice = 0.0;
+                                                    supplierController.text =
+                                                        "";
+                                                    workerController.text = "";
+                                                    billInDateController.text =
+                                                        "";
+                                                  });
 
-                                          Log(
-                                              tag: tag,
-                                              message: "Item list isn't null");
-                                        }
-                                      } else if (widget.billType == billOut) {
-                                        Log(
-                                            tag: tag,
-                                            message:
-                                                "Bill type is ${widget.billType}");
-                                        if (itemBillIns.isNotEmpty &&
-                                            listSelectedItemsDepot.isNotEmpty &&
-                                            selectedSupplier.Id != -1 &&
-                                            selectedWorker.Id != -1 &&
-                                            listShowObjectMainTable
-                                                .isNotEmpty) {
-                                          Log(
-                                              tag: tag,
-                                              message:
-                                                  "You can start process of add bill out");
-                                        }
-                                        Bill bill = Bill(
-                                            ID: 0,
-                                            depotId: "",
-                                            dateTime: billInDateController.text
-                                                .toString(),
-                                            outsidePersonId:
-                                                selectedSupplier.Id,
-                                            type: widget.billType,
-                                            workerId: selectedWorker.Id,
-                                            itemBills: "",
-                                            totalPrices: toTalPrice);
-                                        //listItems
-                                        await addNewBillOut(
-                                            bill: bill,
-                                            listItemOutBill: itemBillIns,
-                                            listSelectedItemsDepot:
-                                                listSelectedItemsDepot,
-                                            selectedDepot: selectedDepot,
-                                            depotItemIndexList:
-                                                depotItemIndexList,
-                                            tagMain: tag);
-                                        setState(() {
-                                          itemBillIns.clear();
-                                          listShowObjectMainTable.clear();
-                                          selectedSupplier =
-                                              selectedSupplier.init();
-                                          selectedWorker =
-                                              selectedWorker.init();
+                                                  Log(
+                                                      tag: tag,
+                                                      message:
+                                                          "Item list isn't null");
+                                                }
+                                              } else if (widget.billType ==
+                                                  billOut) {
+                                                Log(
+                                                    tag: tag,
+                                                    message:
+                                                        "Bill type is ${widget.billType}");
+                                                if (itemBillIns.isNotEmpty &&
+                                                    listSelectedItemsDepot
+                                                        .isNotEmpty &&
+                                                    selectedSupplier.Id != -1 &&
+                                                    selectedWorker.Id != -1 &&
+                                                    listShowObjectMainTable
+                                                        .isNotEmpty) {
+                                                  Log(
+                                                      tag: tag,
+                                                      message:
+                                                          "You can start process of add bill out");
+                                                }
+                                                Bill bill = Bill(
+                                                    ID: 0,
+                                                    depotId: "",
+                                                    dateTime:
+                                                        billInDateController
+                                                            .text
+                                                            .toString(),
+                                                    outsidePersonId:
+                                                        selectedSupplier.Id,
+                                                    type: widget.billType,
+                                                    workerId: selectedWorker.Id,
+                                                    itemBills: "",
+                                                    totalPrices: toTalPrice);
+                                                //listItems
+                                                await addNewBillOut(
+                                                    bill: bill,
+                                                    listItemOutBill:
+                                                        itemBillIns,
+                                                    listSelectedItemsDepot:
+                                                        listSelectedItemsDepot,
+                                                    selectedDepot:
+                                                        selectedDepot,
+                                                    depotItemIndexList:
+                                                        depotItemIndexList,
+                                                    tagMain: tag);
+                                                setState(() {
+                                                  itemBillIns.clear();
+                                                  listShowObjectMainTable
+                                                      .clear();
+                                                  selectedSupplier =
+                                                      selectedSupplier.init();
+                                                  selectedWorker =
+                                                      selectedWorker.init();
 
-                                          toTalPrice = 0.0;
-                                          supplierController.text = "";
-                                          workerController.text = "";
-                                          billInDateController.text = "";
-                                          listSelectedItemsDepot.clear();
-                                          selectedDepot = selectedDepot.init();
+                                                  toTalPrice = 0.0;
+                                                  supplierController.text = "";
+                                                  workerController.text = "";
+                                                  billInDateController.text =
+                                                      "";
+                                                  listSelectedItemsDepot
+                                                      .clear();
+                                                  selectedDepot =
+                                                      selectedDepot.init();
 
-                                          depotItemIndexList.clear();
-                                          listShowObject = [];
-                                          tableName = depotTableName;
-                                          initObjectSearch = "Depot";
-                                          //searchFunctionConfig();
-                                        });
-                                      }
+                                                  depotItemIndexList.clear();
+                                                  listShowObject = [];
+                                                  tableName = depotTableName;
+                                                  initObjectSearch = "Depot";
+                                                  itemController.text = "";
+                                                  price = 0.0;
+                                                  toTalPrice = 0.0;
+                                                  totalPrice = 0.0;
+
+                                                  //searchFunctionConfig();
+                                                });
+                                              }
+                                              OverlayLoadingProgress.stop();
+                                            }
+                                          }));
                                     }),
                                 IconButton(
                                     icon: const Icon(
