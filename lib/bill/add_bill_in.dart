@@ -350,7 +350,7 @@ class _AddBillInState extends State<AddBillIn> {
         setState(() {
           listSelectedItemsDepot = [];
           listShowObjectMainTable = [];
-          selectedDepot = selectedDepot.init();
+          selectedDepot = intDepot;
         });
         // convert json to item array
         List<Depot> listDepotIn = (res.isNotEmpty
@@ -1347,7 +1347,7 @@ class _AddBillInState extends State<AddBillIn> {
                                                   await addNewBillIn(
                                                       bill: bill,
                                                       listItemBill: itemBillIns,
-                                                      isUniqueDepot: false);
+                                                      tagMain: tag);
                                                   setState(() {
                                                     itemBillIns.clear();
                                                     listShowObjectMainTable
@@ -1429,8 +1429,7 @@ class _AddBillInState extends State<AddBillIn> {
                                                       "";
                                                   listSelectedItemsDepot
                                                       .clear();
-                                                  selectedDepot =
-                                                      selectedDepot.init();
+                                                  selectedDepot = intDepot;
                                                   depotController.text = "";
                                                   depotItemIndexList.clear();
                                                   listShowObject = [];

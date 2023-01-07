@@ -325,7 +325,7 @@
       "password":"Password",
       "@password": {
       "description": "A programmer greeting"},
-      "password1":"Password1",
+      "password1":"Confirm Password",
       "@password1": {
       "description": "A programmer greeting"},
       "email":"Email",
@@ -372,18 +372,48 @@
       "description": "A programmer greeting"},
       "seller":"Seller", 
       "@seller": {
+      "description": "A programmer greeting"},
+      "update_account":"Update account", 
+      "@update_account": {
+      "description": "A programmer greeting"},
+      "delete_account":"Delete account", 
+      "@delete_account": {
+      "description": "A programmer greeting"},
+      "no_account":"Don’t have an Account ?", 
+      "@no_account": {
+      "description": "A programmer greeting"},
+      "has_account":"Already have an Account ?", 
+      "@has_account": {
+      "description": "A programmer greeting"},
+      "sign_up": "Sign Up", 
+      "@sign_up": {
+      "description": "A programmer greeting"},
+      "sign_in": "Sign In", 
+      "@sign_in": {
+      "description": "A programmer greeting"},
+      "user_exist": "User exist!!", 
+      "@user_exist": {
+      "description": "A programmer greeting"},
+
+      "register": "Register", 
+      "@register": {
+      "description": "A programmer greeting"},
+
+      "type_name": "type your Name", 
+      "@type_name": {
+      "description": "A programmer greeting"},
+
+      "manager_account":"Account management", 
+      "@manager_account": {
+      "description": "A programmer greeting"},
+
+      "manager_error_message":"You cannot delete the user, the user is admin!!", 
+      "@manager_error_message": {
       "description": "A programmer greeting"}
 
 
 
-
       
-  
-   
-    
-    
- 
-
     
     
 }

@@ -224,8 +224,8 @@ class DBProvider {
     //insert to the table using the new id
     Log(tag: "Index is: ", message: id.toString());
     var raw = await db.rawInsert(
-        "INSERT Into $tableName (id,name,address, capacity,availableCapacity,billsID, depotListItem,depotListOutItem)"
-        " VALUES (?,?,? ,?,?,? ,?,? )",
+        "INSERT Into $tableName (id,name,address, capacity,availableCapacity,billsID, depotListItem,depotListOutItem, depotItem)"
+        " VALUES (?,?,? ,?,?,? ,?,?,? )",
         [
           id,
           depot.name,
@@ -236,7 +236,8 @@ class DBProvider {
           "depotBillsID$id",
           //
           "depotListItem$id",
-          "depotListOutItem$id"
+          "depotListOutItem$id",
+          "depotItem$id"
         ]);
     return raw;
   }
@@ -789,6 +790,20 @@ class DBProvider {
     }
   }
 
+  getObjectByElement(
+      {required String tableName,
+      required String value,
+      required String element}) async {
+    final db = await database;
+    bool existTable = await checkExistTable(tableName: tableName);
+    if (existTable) {
+      return await db
+          .query(tableName, where: "$element = ?", whereArgs: [value]);
+    } else {
+      return [];
+    }
+  }
+
   /* billOutId: id,
                 billOutItemId: idBillItem,*/
 
@@ -799,7 +814,6 @@ class DBProvider {
     final db = await database;
     bool existTable = await checkExistTable(tableName: tableName);
     if (existTable) {
-      final db = await database;
       String query =
           "SELECT * FROM $tableName WHERE billOutId = $billOutId AND billOutItemId = $billOutItemId";
       return await db.rawQuery(query);

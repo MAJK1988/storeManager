@@ -56,15 +56,15 @@ addNewItem({required Item item}) async {
   return raw;
 }
 
-addNewItemDepot(
-    {required ItemDepot itemDepot, required String tableName}) async {
+Future<String> addNewItemDepot(
+    {required ItemDepot itemDepot,
+    required String tableName,
+    required String tagMain}) async {
   // table name: NewItemDepot$ItemID
   // table related to item
-  String tag = "addNewItemDepot";
-  Log(tag: tag, message: "Activate Function");
+  String tag = "$tagMain/addNewItemDepot";
+  Log(tag: tag, message: "Activate Function, table name: $tableName ");
   final db = await DBProvider.db.database;
-  //get the biggest id in the table
-  List<Map<String, Object?>> table;
 
   bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
   if (!tableExist) {
@@ -83,7 +83,7 @@ addNewItemDepot(
         "INSERT Into $tableName (id,number )"
         " VALUES (?,?)",
         [itemDepot.depotId, itemDepot.number]);
-    return raw;
+    return "Add new item depot, item number is: ${itemDepot.number}";
   } else {
     // depot exist
     Log(tag: tag, message: "depot exist!!!");
@@ -94,8 +94,9 @@ addNewItemDepot(
       var up = await DBProvider.db.updateObject(
           v: itemDepotUp, tableName: tableName, id: itemDepotUp.depotId);
       Log(tag: tag, message: "depot has been updated");
+      return "Update item depot , item number is: ${itemDepotUp.number}";
     }
-    return 0;
+    return "Error";
   }
 }
 

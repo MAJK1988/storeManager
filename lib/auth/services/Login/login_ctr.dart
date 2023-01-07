@@ -24,7 +24,10 @@ class LoginCtr {
     var res = await DBProvider.db
         .executeQuery(tableName: workerTableName, query: query);
     if (res.isNotEmpty) {
-      return Worker.fromJson(res.first);
+      Worker worker = Worker.fromJson(res.first);
+      if (worker.userIndex > 0) {
+        return worker;
+      }
     }
     return null;
   }

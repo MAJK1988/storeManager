@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:store_manager/dataBase/sql_object.dart';
 import 'package:store_manager/utils/objects.dart';
 
 import '../../../../home.dart';
@@ -31,7 +32,7 @@ class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
   late String tag = "Login";
 
   late BuildContext ctx;
-  bool forChangePassWord = false;
+  bool forChangePassWord = false, isWorkerTableExist = false;
 
   late String email = '', passWord = '', passWord1 = '';
   late bool setText = true;
@@ -43,19 +44,24 @@ class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
   @override
   void initState() {
     //SharedPreferences.setMockInitialValues({});
-    if (!widget.forChangePassword) {
-      () async {
+    () async {
+      if (!widget.forChangePassword) {
         SharedPreferences _pref = await SharedPreferences.getInstance();
         Log(tag: tag, message: "Try to login to app!!!");
-
         String email = _pref.getString("email") ?? "";
         String password = _pref.getString("password") ?? "";
         Log(tag: tag, message: "email: $email, password: $password");
         if (email != "" && password != "") {
           response.doLogin(email, password);
         }
-      }();
-    }
+      }
+      bool isworkerTableExist =
+          await DBProvider.db.checkExistTable(tableName: workerTableName);
+      setState(() {
+        isWorkerTableExist = isworkerTableExist;
+      });
+      Log(tag: tag, message: "isWorkerTableExist: $isWorkerTableExist");
+    }();
 
     super.initState();
   }
@@ -66,10 +72,11 @@ class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
       setState(() {
         setText = true;
       });
-    } else if (!setText && count == 0)
+    } else if (!setText && count == 0) {
       setState(() {
         count++;
       });
+    }
     Size size = MediaQuery.of(context).size;
     return Background(
       child: SingleChildScrollView(
@@ -130,7 +137,7 @@ class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
                       : AppLocalizations.of(context)!.validate_new_password,
               press: () {
                 Log(tag: tag, message: "Test login callBack");
-                //response.doLogin("email", "passWord");
+                //DBProvider.db.deleteDatabase();
                 if (!Validator.checkEmpty(email, passWord, passWord)) {
                   setState(() {
                     email = '';
@@ -140,7 +147,10 @@ class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
                   });
                 } else {
                   if (!widget.forChangePassword) {
-                    Log(tag: tag, message: "Try to login");
+                    Log(
+                        tag: tag,
+                        message:
+                            "Try to login, email: $email, passWord: $passWord");
                     response.doLogin(email, passWord);
                   } else {
                     if (!forChangePassWord) {
@@ -181,7 +191,7 @@ class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
             ),
             SizedBox(height: size.height * 0.03),
             Visibility(
-                visible: !widget.forChangePassword,
+                visible: !widget.forChangePassword && !isWorkerTableExist,
                 child: AlreadyHaveAnAccountCheck(
                   press: () {
                     Navigator.push(
@@ -229,9 +239,15 @@ class _BodyLoginState extends State<BodyLogin> implements LoginCallBack {
           _pref.setString("password", passWord).then((value) {
             Log(tag: tag, message: "password is saved? $value,  $passWord");
           });
+          _pref.setInt("UserIndex", user.userIndex).then((value) {
+            Log(
+                tag: tag,
+                message: "UserIndex is saved? $value,  ${user.userIndex}");
+          });
         });
       }
       if (!widget.forChangePassword) {
+        // ignore: use_build_context_synchronously
         Navigator.pushReplacement<void, void>(
           context,
           MaterialPageRoute<void>(

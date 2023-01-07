@@ -9,16 +9,20 @@ class SearchColumnSTF extends StatefulWidget {
   final Size size;
   final ValueChanged<dynamic> getElement;
   final ValueChanged<int>? getIndex;
+
   final String initObjectSearch;
   final String? billType;
+  final Depot? depot;
 
-  const SearchColumnSTF(
-      {super.key,
-      required this.size,
-      required this.getElement,
-      this.initObjectSearch = "",
-      this.billType,
-      this.getIndex});
+  const SearchColumnSTF({
+    super.key,
+    required this.size,
+    required this.getElement,
+    this.initObjectSearch = "",
+    this.billType,
+    this.getIndex,
+    this.depot,
+  });
 
   @override
   State<SearchColumnSTF> createState() => _SearchColumnSTFState();
@@ -38,9 +42,11 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
   late List<Worker> listWorker = [];
   late List<Depot> listDepot = [];
   late List<Supplier> listSupplier = [];
-  late Depot selectedDepot = initDepot();
+
   late List<ItemsDepot> listItemsDepot = [];
   late List<ItemsDepot> listSelectedItemsDepot = [];
+  late List<ItemDepot> listItemsOutDepot = [];
+  late List<ItemDepot> listSelectedOutItemsDepot = [];
   late List<Item> listItems = [];
   late List<ShowObject> listShowObjectMainTable = [];
 
@@ -62,65 +68,44 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
       Log(
           tag: tag,
           message:
-              "selectedDepot.depotListItem: ${selectedDepot.depotListItem}");
-      var res = await DBProvider.db
-          .getAllObjects(tableName: selectedDepot.depotListItem);
+              "selectedDepot.depotListItem: ${widget.depot!.depotListItem}");
+      var res =
+          await DBProvider.db.getAllObjects(tableName: widget.depot!.depotItem);
       if (res.isNotEmpty)
       // convert json to item array
       {
-        List<ItemsDepot> listItemsDepotIn = (res.isNotEmpty
+        List<ItemDepot> listItemsDepotIn = (res.isNotEmpty
             ? (res.isNotEmpty
                 ? res
-                    .map<ItemsDepot>((item) => ItemsDepot.fromJson(item))
+                    .map<ItemDepot>((item) => ItemDepot.fromJson(item))
                     .toList()
                 : [])
             : []); //as List<Item>;
         setState(() {
           if (listSelectedItemsDepot.isEmpty) {
-            listItemsDepot = listItemsDepotIn;
-            listSelectedItemsDepot = listItemsDepotIn;
+            listItemsOutDepot = listItemsDepotIn;
+            listSelectedOutItemsDepot = listItemsDepotIn;
           }
         });
         List<ShowObject> listShowObjectIn = [];
         List<Item> listItemIn = [];
 
-        for (ItemsDepot itemsDepot in listItemsDepotIn) {
+        for (ItemDepot itemsDepot in listItemsDepotIn) {
           var resItem = await DBProvider.db
-              .getObject(id: itemsDepot.itemId, tableName: itemTableName);
-          var resBill = await DBProvider.db
-              .getObject(id: itemsDepot.billId, tableName: billInTableName);
-          if (resItem.isNotEmpty && resBill.isNotEmpty) {
+              .getObject(id: itemsDepot.depotId, tableName: itemTableName);
+
+          if (resItem.isNotEmpty) {
             Item item = Item.fromJson(resItem.first);
-            Bill bill = Bill.fromJson(resBill.first);
-            Log(
-                tag: tag,
-                message:
-                    "get item and bill data, bill id id: ${bill.ID}, itemsDepot bill id is: ${itemsDepot.billId}");
-            bool existTable = await DBProvider.db
-                .checkExistTable(tableName: billInItemTableName);
 
-            if (existTable) {
-              var resItemBill = await DBProvider.db.getObject(
-                  id: itemsDepot.itemBillId, tableName: billInItemTableName);
+            Log(tag: tag, message: "get itemBill data");
 
-              if (resItemBill.isNotEmpty) {
-                Log(tag: tag, message: "get itemBill data");
-                ItemBill itemBill = ItemBill.fromJson(resItemBill.first);
-                ShowObject showObject = ShowObject(
-                    value0: item.name,
-                    value1:
-                        '${itemBill.number.toStringAsFixed(2)}/${item.count.toString()}',
-                    value3: itemBill.productDate,
-                    value2: item.count.toString(),
-                    value4: itemsDepot.number.toStringAsFixed(2));
-                listShowObjectIn.add(showObject);
-                listItemIn.add(item);
-              } else {
-                Log(tag: tag, message: "itemBill isn't exist");
-              }
-            } else {
-              Log(tag: tag, message: "table ${bill.itemBills} isn't exist");
-            }
+            ShowObject showObject = ShowObject(
+                value0: item.name,
+                value1: itemsDepot.number.toStringAsFixed(2),
+                value2: item.count.toString(),
+                value4: itemsDepot.number.toStringAsFixed(2));
+            listShowObjectIn.add(showObject);
+            listItemIn.add(item);
           }
           setState(() {
             listShowObject = listShowObjectIn;
@@ -147,7 +132,6 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
         setState(() {
           listSelectedItemsDepot = [];
           listShowObjectMainTable = [];
-          selectedDepot = selectedDepot.init();
         });
         // convert json to item array
         List<Depot> listDepotIn = (res.isNotEmpty
@@ -440,6 +424,7 @@ class _SearchColumnSTFState extends State<SearchColumnSTF> {
                           if (value!.isNotEmpty) {
                             setState(() {
                               initElementSearch = value;
+                              element = value;
                               listShowObject = [];
                               listItem == [];
                               Log(

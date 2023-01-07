@@ -529,6 +529,10 @@ class ItemDepot {
     number = newNumber;
   }
 
+  ItemDepot init() {
+    return ItemDepot(number: -1, depotId: -1);
+  }
+
   //from json to ItemBillIn BillIn
   Map<String, dynamic> toJson() {
     final _data = <String, dynamic>{};
@@ -722,7 +726,8 @@ Depot initDepot() {
       availableCapacity: 0,
       billsID: "billsIDX",
       depotListItem: "depotListItemX",
-      depotListOutItem: "depotListOutItemX");
+      depotListOutItem: "depotListOutItemX",
+      depotItem: "depotItemX");
 }
 
 Depot intDepot = initDepot();
@@ -736,6 +741,7 @@ class Depot {
   late final String billsID; // table name,
   late final String depotListItem; // table name
   late final String depotListOutItem; // table name
+  late final String depotItem; // table name
 
   Depot(
       {required this.Id,
@@ -745,7 +751,8 @@ class Depot {
       required this.availableCapacity,
       required this.billsID,
       required this.depotListItem,
-      required this.depotListOutItem});
+      required this.depotListOutItem,
+      required this.depotItem});
 
   // read Depot from json object
   Depot.fromJson(Map<String, dynamic> json) {
@@ -759,6 +766,7 @@ class Depot {
 
     depotListItem = json['depotListItem'];
     depotListOutItem = json['depotListOutItem'];
+    depotItem = json['depotItem'];
   }
   //from json to Worker
   Map<String, dynamic> toJson() {
@@ -773,19 +781,8 @@ class Depot {
 
     _data['depotListItem'] = depotListItem;
     _data['depotListOutItem'] = depotListOutItem;
+    _data['depotItem'] = depotItem;
     return _data;
-  }
-
-  Depot init() {
-    return Depot(
-        Id: -1,
-        address: "",
-        name: "",
-        capacity: 0,
-        availableCapacity: 0,
-        billsID: "",
-        depotListItem: "",
-        depotListOutItem: "");
   }
 
   // Create sql table
@@ -798,7 +795,8 @@ class Depot {
         "availableCapacity REAL,"
         "billsID TEXT,"
         "depotListItem TEXT,"
-        "depotListOutItem TEXT"
+        "depotListOutItem TEXT,"
+        "depotItem TEXT"
         ")";
   }
 }
@@ -1071,4 +1069,10 @@ class ItemCategory {
         "name TEXT"
         ")";
   }
+}
+
+class AlarmObject {
+  late String message;
+  late Item item;
+  AlarmObject({required this.message, required this.item});
 }

@@ -7,6 +7,7 @@ import 'package:store_manager/AddObject/add_supplier.dart';
 import 'package:store_manager/bill/add_bill_in.dart';
 import 'package:store_manager/bill/bill_in_manager.dart';
 import 'package:store_manager/dataBase/search_column.dart';
+import 'package:store_manager/dataBase/sql_object.dart';
 import 'package:store_manager/report/report.dart';
 import 'package:store_manager/report/report_element.dart';
 import 'package:store_manager/setting/setting.dart';
@@ -61,6 +62,7 @@ class _HomeState extends State<Home> {
                       builder: (context) => AddSupplier(
                         title: AppLocalizations.of(context)!.add_worker,
                         visible: true,
+                        type: workerType,
                       ),
                     ),
                   );
@@ -126,6 +128,64 @@ class _HomeState extends State<Home> {
       isDepotVisible = false;
   late String tag = "Home", initObjectSearch = "";
   late double width = 0, height = 0;
+  late Worker user = initWorker();
+
+  List<AlarmObject> alarmObjectList = [];
+  getAlarmList() async {
+    var resItemSettingNB =
+        await DBProvider.db.getAllObjects(tableName: settingItemNbTableName);
+    Log(tag: tag, message: "Activate getAlarmList function");
+    if (resItemSettingNB.isNotEmpty) {
+      for (var jsonSettingNB in resItemSettingNB) {
+        ItemSettingNb itemSettingNb = ItemSettingNb.fromJson(jsonSettingNB);
+        var resItem = await DBProvider.db
+            .getObject(id: itemSettingNb.itemId, tableName: itemTableName);
+        if (resItem.isNotEmpty) {
+          Item item = Item.fromJson(resItem.first);
+          Log(tag: tag, message: "Check ${item.name}");
+          if (item.count < itemSettingNb.countLimit) {
+            Log(
+                tag: tag,
+                message:
+                    "${item.name}: count: ${item.count} <=> countLimit: ${itemSettingNb.countLimit}");
+            setState(() {
+              alarmObjectList.add(AlarmObject(
+                  message:
+                      '${item.name}: ${item.count} <=> ${itemSettingNb.countLimit}',
+                  item: item));
+            });
+          }
+        }
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    () async {
+      Log(tag: tag, message: "init");
+      SharedPreferences _pref = await SharedPreferences.getInstance();
+      String? email = _pref.getString("email");
+      Log(tag: tag, message: "email: $email");
+      if (email!.isNotEmpty) {
+        var userRes = await DBProvider.db.getObjectByElement(
+            tableName: workerTableName, value: email, element: "email");
+        if (userRes.isNotEmpty) {
+          Log(tag: tag, message: "Worker exist");
+          setState(() {
+            user = Worker.fromJson(userRes.first);
+            if (user.userIndex == 1) {
+              getAlarmList();
+            }
+          });
+        }
+      }
+    }();
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -149,29 +209,46 @@ class _HomeState extends State<Home> {
         appBar: AppBar(
           title: Text(AppLocalizations.of(context)!.home_page),
           centerTitle: true,
+          actions: [
+            Visibility(
+                visible: alarmObjectList.isNotEmpty, child: popMenuAction())
+          ],
         ),
         drawer: Drawer(
           child: ListView(
             // Important: Remove any padding from the ListView.
             padding: EdgeInsets.zero,
             children: [
-              const DrawerHeader(
-                decoration: BoxDecoration(
+              DrawerHeader(
+                decoration: const BoxDecoration(
                   color: Colors.blue,
                 ),
-                child: Text('Drawer Header'),
+                child:
+                    Text("${AppLocalizations.of(context)!.name}: ${user.name}"),
+              ),
+              Visibility(
+                visible: user.userIndex == 1 || user.userIndex == 2,
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.settings,
+                  ),
+                  title: Text(AppLocalizations.of(context)!.settings),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SettingWidget(),
+                      ),
+                    );
+                  },
+                ),
               ),
               ListTile(
                 leading: const Icon(
-                  Icons.settings,
+                  Icons.logout,
                 ),
-                title: Text(AppLocalizations.of(context)!.settings),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const SettingWidget(),
-                    ),
-                  );
+                title: Text(AppLocalizations.of(context)!.log_out),
+                onTap: () async {
+                  await logOut(context: context);
                 },
               ),
             ],
@@ -203,217 +280,265 @@ class _HomeState extends State<Home> {
                   ),
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Add item
-                  Column(
-                    children: [
-                      homeCard(
-                          isCliked: isVisibleItem,
-                          icon: Icons.precision_manufacturing,
-                          height: height,
-                          onClicked: (value) {
-                            setState(() {
-                              isVisibleItem = !isVisibleItem;
-                              isVisibleSupplier = false;
-                              isVisibleCustomer = false;
-                              isVisibleWorker = false;
-                              if (isSearchVisible) {
-                                isSearchVisible = !isSearchVisible;
-                              }
-                            });
-                          },
-                          text: AppLocalizations.of(context)!.item,
-                          width: width),
-                      getCommand(visibility: isVisibleItem)
-                    ],
-                  ),
-                  // Add supplier
-                  Column(
-                    children: [
-                      homeCard(
-                          isCliked: isVisibleSupplier,
-                          icon: Icons.business_center,
-                          height: height,
-                          onClicked: (value) {
-                            setState(() {
-                              isVisibleItem = false;
-                              isVisibleSupplier = !isVisibleSupplier;
-                              isVisibleCustomer = false;
-                              isVisibleWorker = false;
-                              isDepotVisible = false;
-                              if (isSearchVisible) {
-                                isSearchVisible = !isSearchVisible;
-                              }
-                            });
-                          },
-                          text: AppLocalizations.of(context)!.supplier,
-                          width: width),
-                      getCommand(visibility: isVisibleSupplier)
-                    ],
-                  ),
-                  // Add customer
-                  Column(
-                    children: [
-                      homeCard(
-                          isCliked: isVisibleCustomer,
-                          icon: Icons.verified_user,
-                          height: height,
-                          onClicked: (value) {
-                            setState(() {
-                              isVisibleItem = false;
-                              isVisibleSupplier = false;
-                              isDepotVisible = false;
-                              isVisibleWorker = false;
-                              isVisibleCustomer = !isVisibleCustomer;
-                              if (isSearchVisible) {
-                                isSearchVisible = !isSearchVisible;
-                              }
-                            });
-                          },
-                          text: AppLocalizations.of(context)!.customer,
-                          width: width),
-                      getCommand(visibility: isVisibleCustomer)
-                    ],
-                  ),
-                ],
+              // item, Supplier and customer
+              Visibility(
+                visible: user.userIndex == 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Add item
+                    Column(
+                      children: [
+                        homeCard(
+                            isCliked: isVisibleItem,
+                            icon: Icons.precision_manufacturing,
+                            height: height,
+                            onClicked: (value) {
+                              setState(() {
+                                isVisibleItem = !isVisibleItem;
+                                isVisibleSupplier = false;
+                                isVisibleCustomer = false;
+                                isVisibleWorker = false;
+                                if (isSearchVisible) {
+                                  isSearchVisible = !isSearchVisible;
+                                }
+                              });
+                            },
+                            text: AppLocalizations.of(context)!.item,
+                            width: width),
+                        getCommand(visibility: isVisibleItem)
+                      ],
+                    ),
+                    // Add supplier
+                    Column(
+                      children: [
+                        homeCard(
+                            isCliked: isVisibleSupplier,
+                            icon: Icons.business_center,
+                            height: height,
+                            onClicked: (value) {
+                              setState(() {
+                                isVisibleItem = false;
+                                isVisibleSupplier = !isVisibleSupplier;
+                                isVisibleCustomer = false;
+                                isVisibleWorker = false;
+                                isDepotVisible = false;
+                                if (isSearchVisible) {
+                                  isSearchVisible = !isSearchVisible;
+                                }
+                              });
+                            },
+                            text: AppLocalizations.of(context)!.supplier,
+                            width: width),
+                        getCommand(visibility: isVisibleSupplier)
+                      ],
+                    ),
+                    // Add customer
+                    Column(
+                      children: [
+                        homeCard(
+                            isCliked: isVisibleCustomer,
+                            icon: Icons.verified_user,
+                            height: height,
+                            onClicked: (value) {
+                              setState(() {
+                                isVisibleItem = false;
+                                isVisibleSupplier = false;
+                                isDepotVisible = false;
+                                isVisibleWorker = false;
+                                isVisibleCustomer = !isVisibleCustomer;
+                                if (isSearchVisible) {
+                                  isSearchVisible = !isSearchVisible;
+                                }
+                              });
+                            },
+                            text: AppLocalizations.of(context)!.customer,
+                            width: width),
+                        getCommand(visibility: isVisibleCustomer)
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              //Item list
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Add worker
-                  Column(
-                    children: [
-                      homeCard(
-                          icon: Icons.engineering,
-                          height: height,
-                          onClicked: (value) {
-                            setState(() {
-                              isVisibleItem = false;
-                              isVisibleSupplier = false;
-                              isVisibleCustomer = false;
-                              isDepotVisible = false;
+              //worker
+              Visibility(
+                visible: user.userIndex == 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Add worker
+                    Column(
+                      children: [
+                        homeCard(
+                            icon: Icons.engineering,
+                            height: height,
+                            onClicked: (value) {
+                              setState(() {
+                                isVisibleItem = false;
+                                isVisibleSupplier = false;
+                                isVisibleCustomer = false;
+                                isDepotVisible = false;
 
-                              isVisibleWorker = !isVisibleWorker;
-                              if (isSearchVisible) {
-                                isSearchVisible = !isSearchVisible;
-                              }
-                            });
-                          },
-                          text: AppLocalizations.of(context)!.add_worker,
-                          width: 1.5 * (width + 8)),
-                      getCommand(visibility: isVisibleWorker)
-                    ],
-                  ),
-                  // Add depot
-                  Column(
-                    children: [
-                      homeCard(
-                          icon: Icons.business_sharp,
-                          height: height,
-                          onClicked: (value) {
-                            setState(() {
-                              isVisibleItem = false;
-                              isVisibleSupplier = false;
-                              isVisibleCustomer = false;
-                              isDepotVisible = !isDepotVisible;
+                                isVisibleWorker = !isVisibleWorker;
+                                if (isSearchVisible) {
+                                  isSearchVisible = !isSearchVisible;
+                                }
+                              });
+                            },
+                            text: AppLocalizations.of(context)!.add_worker,
+                            width: 1.5 * (width + 8)),
+                        getCommand(visibility: isVisibleWorker)
+                      ],
+                    ),
+                    // Add depot
+                    Column(
+                      children: [
+                        homeCard(
+                            icon: Icons.business_sharp,
+                            height: height,
+                            onClicked: (value) {
+                              setState(() {
+                                isVisibleItem = false;
+                                isVisibleSupplier = false;
+                                isVisibleCustomer = false;
+                                isDepotVisible = !isDepotVisible;
 
-                              isVisibleWorker = false;
-                              if (isSearchVisible) {
-                                isSearchVisible = !isSearchVisible;
-                              }
-                            });
-                            /*Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => AddDepot(
-                                  title: AppLocalizations.of(context)!.add_depot,
+                                isVisibleWorker = false;
+                                if (isSearchVisible) {
+                                  isSearchVisible = !isSearchVisible;
+                                }
+                              });
+                              /*Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => AddDepot(
+                                    title: AppLocalizations.of(context)!.add_depot,
+                                  ),
                                 ),
-                              ),
-                            );*/
-                          },
-                          text: AppLocalizations.of(context)!.add_depot,
-                          width: 1.5 * (width + 8)),
-                      getCommand(visibility: isDepotVisible)
-                    ],
-                  ),
-                ],
+                              );*/
+                            },
+                            text: AppLocalizations.of(context)!.add_depot,
+                            width: 1.5 * (width + 8)),
+                        getCommand(visibility: isDepotVisible)
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Add Bill in
-                  homeCard(
-                      icon: Icons.inventory,
-                      height: height,
-                      onClicked: (value) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const BillUniqStoreIn() //AddBillIn()
-                              ),
-                        );
-                      },
-                      text: AppLocalizations.of(context)!.bill_receipt,
-                      width: 1.5 * (width + 8)),
-                  // Add  Bill out
-                  homeCard(
-                      icon: Icons.inventory,
-                      height: height,
-                      onClicked: (value) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => //const BillUniqStoreIn()
-                                  const BillUniqStoreIn(
-                                    billType: billOut,
-                                  )),
-                        );
-                      },
-                      text: AppLocalizations.of(context)!.bill_out,
-                      width: 1.5 * (width + 8)),
-                ],
+              //Bill In/Out
+              Visibility(
+                visible: user.userIndex > 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Add Bill in
+                    homeCard(
+                        icon: Icons.inventory,
+                        height: height,
+                        onClicked: (value) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    BillUniqStoreIn(worker: user) //AddBillIn()
+                                ),
+                          );
+                        },
+                        text: AppLocalizations.of(context)!.bill_receipt,
+                        width: 1.5 * (width + 8)),
+                    // Add  Bill out
+                    homeCard(
+                        icon: Icons.inventory,
+                        height: height,
+                        onClicked: (value) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => //const BillUniqStoreIn()
+                                    BillUniqStoreIn(
+                                      billType: billOut,
+                                      worker: user,
+                                    )),
+                          );
+                        },
+                        text: AppLocalizations.of(context)!.bill_out,
+                        width: 1.5 * (width + 8)),
+                  ],
+                ),
               ),
 
-              // Add  Bill out
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Bill In manager in
-                  homeCard(
-                      icon: Icons.input_sharp,
-                      height: height,
-                      onClicked: (value) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const BillInManager(
-                              typeBill: billIn,
+              //Bill manager In/out
+              Visibility(
+                visible: user.userIndex == 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Bill In manager in
+                    homeCard(
+                        icon: Icons.input_sharp,
+                        height: height,
+                        onClicked: (value) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const BillInManager(
+                                typeBill: billIn,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      text: AppLocalizations.of(context)!.bill_manager,
-                      width: 1.5 * (width + 8)),
-                  // Bill In manager Out
-                  homeCard(
-                      icon: Icons.output_rounded,
-                      height: height,
-                      onClicked: (value) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const BillInManager(
-                              typeBill: billOut,
-                            ), //const Report(),
-                          ),
-                        );
-                      },
-                      text: AppLocalizations.of(context)!.bill_manager,
-                      width: 1.5 * (width + 8)),
-                ],
+                          );
+                        },
+                        text: AppLocalizations.of(context)!.bill_manager,
+                        width: 1.5 * (width + 8)),
+                    // Bill In manager Out
+                    homeCard(
+                        icon: Icons.output_rounded,
+                        height: height,
+                        onClicked: (value) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const BillInManager(
+                                typeBill: billOut,
+                              ), //const Report(),
+                            ),
+                          );
+                        },
+                        text: AppLocalizations.of(context)!.bill_manager,
+                        width: 1.5 * (width + 8)),
+                  ],
+                ),
               ),
             ],
           ),
         ));
+  }
+
+  PopupMenuButton<String> popMenuAction() {
+    return PopupMenuButton<String>(
+        icon: const Icon(
+          Icons.notification_important_outlined,
+          color: Colors.red,
+        ),
+        itemBuilder: (context) => alarmObjectList
+            .map((e) => PopupMenuItem<String>(
+                  value: "1",
+                  child: TextButton(
+                      //Handle button press event
+                      onPressed: () {
+                        Log(tag: tag, message: "PopupMenuItem call billIn");
+
+                        //alarmList.remove(e);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) => BillUniqStoreIn(
+                                    item: e.item,
+                                    worker: user,
+                                  ) //AddBillIn()
+                              ),
+                        );
+                      },
+                      //Contents of the button
+                      child: Text(
+                        e.message,
+                        style: const TextStyle(color: Colors.red),
+                      )),
+                ))
+            .toList());
   }
 
   void sendToUpdateObjectClass({required dynamic object}) {

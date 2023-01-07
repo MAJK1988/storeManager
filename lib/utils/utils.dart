@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'dart:math';
 
+import '../auth/Screens/Login/login_screen.dart';
 import '../dataBase/item_sql.dart';
 import '../dataBase/sql_object.dart';
 
@@ -268,7 +269,7 @@ TableRow inputDataBillInTableUniqueDepot(
   return TableRow(children: [
     TableCell(child: centreText(text: showObject.value0)), // name item
     TableCell(child: centreText(text: showObject.value1)), //number
-    TableCell(child: centreText(text: showObject.value3)), //Price
+    /*TableCell(child: centreText(text: showObject.value3)),*/ //Price
     Stack(children: [
       TableCell(
           child: centreText(text: showObject.value5)), // total price of item
@@ -354,11 +355,10 @@ titleTableUniqueDepot({required BuildContext context}) {
     TableCell(
         child: titleElementTable(title: AppLocalizations.of(context)!.number)),
 
+    /* TableCell(
+        child: titleElementTable(title: AppLocalizations.of(context)!.price)),*/
     TableCell(
         child: titleElementTable(title: AppLocalizations.of(context)!.price)),
-    TableCell(
-        child: titleElementTable(
-            title: AppLocalizations.of(context)!.total_price)),
   ]);
 }
 /********************************** */
@@ -463,7 +463,8 @@ addDepotToDatabase({required int depotNumber}) async {
         availableCapacity: 0,
         billsID: "",
         depotListItem: "",
-        depotListOutItem: ""
+        depotListOutItem: "",
+        depotItem: "depotListOutItemX"
 
         // soldBy: ((Random().nextInt(35) + 1) > 16) ? "Kg" : "unit",
         );
@@ -720,5 +721,20 @@ void show_Widget(
         ],
       );
     },
+  );
+}
+
+logOut({required BuildContext context}) async {
+  SharedPreferences pref = await SharedPreferences.getInstance();
+  pref.setString("email", "");
+  pref.setString("password", "");
+  pref.setInt("UserIndex", 0);
+
+  // ignore: use_build_context_synchronously
+  Navigator.pushReplacement<void, void>(
+    context,
+    MaterialPageRoute<void>(
+      builder: (BuildContext context) => const LoginScreenApp(),
+    ),
   );
 }

@@ -143,6 +143,7 @@ class _DepotWidgetState extends State<DepotWidget> {
                             tableName: depotTableName);
                         if (!(hasName) || widget.depot != null) {
                           Depot depot = Depot(
+                              depotItem: "",
                               Id: widget.depot == null ? 0 : widget.depot!.Id,
                               address: address,
                               name: name,

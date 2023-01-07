@@ -469,7 +469,9 @@ class _SupplierWidgetState extends State<SupplierWidget>
                         if (!(hasPhoneNumber || hasEmail) ||
                             widget.worker != null) {
                           Worker worker = Worker(
-                              userIndex: 0,
+                              userIndex: widget.worker == null
+                                  ? 0
+                                  : widget.worker!.userIndex,
                               Id: widget.worker == null ? 0 : widget.worker!.Id,
                               name: name,
                               address: address,

@@ -13,6 +13,7 @@ import 'package:store_manager/utils/objects.dart';
 import 'package:store_manager/utils/utils.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+import '../../../../home.dart';
 import '../../../components/already_have_an_account_acheck.dart';
 import '../../../components/rounded_button.dart';
 import '../../../components/rounded_input_field.dart';
@@ -23,6 +24,7 @@ import '../../../services/validotrs.dart';
 import '../../Login/login_screen.dart';
 import 'background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Body extends StatefulWidget {
   const Body({Key? key}) : super(key: key);
@@ -89,7 +91,7 @@ class _BodydState extends State<Body> implements SignUpCallBack {
             ),
             //type your name
             RoundedInputField(
-              hintText: "type your Name",
+              hintText: AppLocalizations.of(context)!.type_name,
               controll: 'name',
               onChanged: (value) {
                 setState(() {
@@ -100,7 +102,8 @@ class _BodydState extends State<Body> implements SignUpCallBack {
             ),
 
             RoundedInputField(
-              hintText: "Your Email",
+              hintText: AppLocalizations.of(context)!.email,
+              icon: Icons.email,
               onChanged: (value) {
                 setState(() {
                   email = value;
@@ -109,7 +112,7 @@ class _BodydState extends State<Body> implements SignUpCallBack {
               inputText: setText,
             ),
             RoundedPasswordField(
-              hintText: "Password",
+              hintText: AppLocalizations.of(context)!.password,
               onChanged: (value) {
                 setState(() {
                   passWord = value;
@@ -118,7 +121,7 @@ class _BodydState extends State<Body> implements SignUpCallBack {
               inputText: setText,
             ),
             RoundedPasswordField(
-              hintText: "Confirm Password",
+              hintText: AppLocalizations.of(context)!.password1,
               onChanged: (value) {
                 setState(() {
                   passWordConfirm = value;
@@ -144,13 +147,7 @@ class _BodydState extends State<Body> implements SignUpCallBack {
               press: () async {
                 Log(tag: tag, message: "test sign up callBack");
                 //element: "name", searchFor: name
-                bool hasSaved = await DBProvider.db.tableHasObject(
-                    tableName: workerTableName,
-                    element: "email",
-                    searchFor: initWorker().email);
-                if (!hasSaved) {
-                  response.doSignUp(initWorker());
-                }
+
                 if (!Validator.checkAllInput(
                     email: email,
                     password: passWord,
@@ -166,7 +163,45 @@ class _BodydState extends State<Body> implements SignUpCallBack {
                     count = 0;
                   });
                 } else {
-                  //process
+                  bool hasEmail = await DBProvider.db.tableHasObject(
+                      tableName: workerTableName,
+                      element: "email",
+                      searchFor: email);
+                  bool hasPhone = await DBProvider.db.tableHasObject(
+                      tableName: workerTableName,
+                      element: "phoneNumber",
+                      searchFor: phone);
+
+                  if (hasEmail || hasPhone) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(
+                      // ignore: use_build_context_synchronously
+                      AppLocalizations.of(context)!.user_exist,
+                    )));
+                    setState(() {
+                      email = '';
+                      passWord = '';
+                      passWordConfirm = '';
+                      phone = '';
+                      setText = false;
+                      count = 0;
+                    });
+                  } else {
+                    response.doSignUp(Worker(
+                        Id: 0,
+                        name: name,
+                        address: "init address",
+                        phoneNumber: phone,
+                        email: email,
+                        password: passWord,
+                        startTime: DateTime(DateTime.now().year,
+                                DateTime.now().month, DateTime.now().day)
+                            .toString(),
+                        endTime: "",
+                        status: 0,
+                        userIndex: 1,
+                        salary: 0));
+                  }
                 }
               },
             ),
@@ -212,11 +247,37 @@ class _BodydState extends State<Body> implements SignUpCallBack {
   void onSignUpError(String error) {
     Log(tag: tag, message: "Error: $error");
     // TODO: implement onLoginError
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+      // ignore: use_build_context_synchronously
+      AppLocalizations.of(context)!.error_login,
+    )));
   }
 
   @override
-  void onSignUpSuccess(int id) {
+  void onSignUpSuccess(int id) async {
     Log(tag: tag, message: "sign up has been validated!!!!");
-    // TODO: implement onLoginSuccess
+    Log(tag: tag, message: "Has login!!!!");
+    SharedPreferences _pref = await SharedPreferences.getInstance();
+    if (email.isNotEmpty && passWord.isNotEmpty) {
+      setState(() {
+        _pref.setString("email", email).then((value) {
+          Log(tag: tag, message: "email is saved? $value,  $email");
+        });
+        _pref.setString("password", passWord).then((value) {
+          Log(tag: tag, message: "password is saved? $value,  $passWord");
+        });
+        _pref.setInt("UserIndex", 1).then((value) {
+          Log(tag: tag, message: "UserIndex is saved? $value,  1");
+        });
+      });
+      // ignore: use_build_context_synchronously
+      Navigator.pushReplacement<void, void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const Home(),
+        ),
+      );
+    }
   }
 }

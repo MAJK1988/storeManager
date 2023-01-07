@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:store_manager/dataBase/item_sql.dart';
 import 'package:store_manager/dataBase/sql_object.dart';
+import 'package:store_manager/lang_provider/locale_provider.dart';
 
 import '../utils/objects.dart';
 import '../utils/utils.dart';
@@ -9,11 +10,12 @@ import 'depot_sql.dart';
 
 addNewBillIn(
     {required Bill bill,
-    required List<ItemBill> listItemBill,
-    required bool isUniqueDepot}) async {
-  String tag = "addNewBillIn";
-  Log(tag: tag, message: "Activate Function");
+    required String tagMain,
+    required List<ItemBill> listItemBill}) async {
+  String tag = "$tagMain/addNewBillIn";
+
   String tableName = billInTableName;
+  Log(tag: tag, message: "Activate Function, tableName $billInTableName");
   final db = await DBProvider.db.database;
   //get the biggest id in the table
   List<Map<String, Object?>> table;
@@ -34,7 +36,7 @@ addNewBillIn(
           ? id = 0
           : id = int.parse((table.first['id']).toString());
   //insert to the table using the new id
-  Log(tag: "Index is: ", message: id.toString());
+  Log(tag: tag, message: "Index is: $id");
   var raw = await db.rawInsert(
       "INSERT Into $tableName (id,depotId,dateTime, outsidePersonId,type,workerId, itemBills,totalPrices)"
       " VALUES (?,?,?, ?,?,?, ?,? )",
@@ -51,26 +53,24 @@ addNewBillIn(
         bill.totalPrices
       ]);
   int i = 0;
+  Log(tag: tag, message: "listItemBill length: ${listItemBill.length}");
   for (ItemBill itemBill in listItemBill) {
     i = i + 1;
-    Log(tag: tag, message: "Add new BillItem, id: $i");
+
     itemBill.billId = id;
     int itemBillId = await addNewBillItem(
       itemBill: itemBill,
       type: billIn,
     );
-
+    Log(tag: tag, message: "Add new BillItem, id: $itemBillId");
     var res = await DBProvider.db
         .getObject(id: itemBill.depotID, tableName: depotTableName);
     var resItem = await DBProvider.db
         .getObject(id: itemBill.IDItem, tableName: itemTableName);
 
-    if ((res.isNotEmpty || isUniqueDepot) && resItem.isNotEmpty) {
+    if (res.isNotEmpty && resItem.isNotEmpty) {
       // Add itemBill to depot
-      Depot depot = initDepot();
-      if (!isUniqueDepot) {
-        depot = Depot.fromJson(res.first);
-      }
+      Depot depot = Depot.fromJson(res.first);
 
       Item item = Item.fromJson(resItem.first);
       depot.availableCapacity =
@@ -79,7 +79,7 @@ addNewBillIn(
           tag: tag,
           message:
               "availableCapacity: ${depot.availableCapacity}, capacity: ${depot.capacity}");
-      if (depot.availableCapacity < depot.capacity || isUniqueDepot) {
+      if (depot.availableCapacity < depot.capacity || true) {
         ItemsDepot itemsDepot = ItemsDepot(
             id: 0,
             itemId: itemBill.IDItem,
@@ -101,10 +101,21 @@ addNewBillIn(
         await DBProvider.db
             .updateObject(v: depot, tableName: depotTableName, id: depot.Id);
 
-        // update item's depot
-        await addNewItemDepot(
+        // update item's depot,
+        String resultItemDepot = await addNewItemDepot(
             itemDepot: ItemDepot(number: itemBill.number, depotId: depot.Id),
+            tagMain: tag,
             tableName: item.depotID);
+        Log(tag: tag, message: "Item depot add result $resultItemDepot");
+        // Add depot item
+        ItemDepot itemDepotDepot =
+            ItemDepot(number: itemBill.number, depotId: item.ID);
+        String resultDepotItem = await addNewItemDepot(
+            tagMain: tag,
+            itemDepot: itemDepotDepot,
+            tableName: depot.depotItem);
+        Log(tag: tag, message: "Depot Item add result $resultDepotItem");
+
         //Add new supplier to item if it isn't exist
         await addNewItemSupplier(
             itemSupplier: ItemSupplier(supplier: bill.outsidePersonId),
@@ -115,6 +126,38 @@ addNewBillIn(
   return raw;
 }
 
+/// *****************************************************************************/
+managerItemCount(
+    {required List<ItemBill> listItemOutBill, required String tagMain}) async {
+  final String tag = '$tagMain/managerItemCount';
+  Log(tag: tag, message: "Start function");
+  for (ItemBill itemBill in listItemOutBill) {
+    var resItemSettingNb = await DBProvider.db.getObject(
+        id: itemBill.IDItem,
+        tableName: settingItemNbTableName,
+        value: "itemId");
+    if (resItemSettingNb.isNotEmpty) {
+      var resItem = await DBProvider.db
+          .getObject(id: itemBill.IDItem, tableName: itemTableName);
+      if (resItem.isNotEmpty) {
+        Item item = Item.fromJson(resItem.first);
+        ItemSettingNb itemSettingNb =
+            ItemSettingNb.fromJson(resItemSettingNb.first);
+        Log(tag: tag, message: "Check ${item.name}");
+        if (item.count < itemSettingNb.countLimit) {
+          Log(
+              tag: tag,
+              message:
+                  "${item.name}: count: ${item.count} <=> countLimit: ${itemSettingNb.countLimit}");
+
+          //alarmList.add('${item.name}: ${item.count} <=> ${itemSettingNb.countLimit}');
+        }
+      }
+    }
+  }
+}
+
+///*******************************************************************************/
 addNewBillOut(
     {required Bill bill,
     required List<ItemBill> listItemOutBill,
@@ -125,7 +168,7 @@ addNewBillOut(
     bool devMode = false}) async {
   String tag = "$tagMain/addNewBillOut"; //listItemBill
   Log(tag: tag, message: "Activate Function, : ${listItemOutBill.length}");
-  if (devMode) {
+  /*if (devMode) {
     for (int i = 0; i < listItemOutBill.length; i++) {
       Log(
           tag: tag,
@@ -133,7 +176,7 @@ addNewBillOut(
               "Is item depot and bill item have same item id: ${(listItemOutBill[i].IDItem == listSelectedItemsDepot[depotItemIndexList[i]].itemId)}");
     }
     return;
-  }
+  }*/
 
   String tableName = billIOutTableName;
   final db = await DBProvider.db.database;
@@ -181,6 +224,10 @@ addNewBillOut(
         tag: tag,
         message:
             "Is item depot and bill item have same item id: ${(listItemOutBill[i].IDItem == listSelectedItemsDepot[depotItemIndexList[i]].itemId)}");
+    Log(
+        tag: tag,
+        message:
+            "Is item depot and bill item have same item id: ${depotItemIndexList[i]}");
 
     var resItem = await DBProvider.db
         .getObject(id: listItemOutBill[i].IDItem, tableName: itemTableName);
@@ -291,13 +338,269 @@ addNewBillOut(
         Log(tag: tag, message: "Update depots capacity");
         await DBProvider.db.updateObject(
             v: selectedDepot, tableName: depotTableName, id: selectedDepot.Id);
+      } else {
+        Log(
+            tag: tag,
+            message: "Error in Item count; item count: ${item.count}");
       }
     }
 
     // update Item depot
   }
+  //await managerItemCount(listItemOutBill: listItemOutBill, tagMain: tag);
   return raw;
 }
+
+////****************************************************************************** */
+addNewBillOutNew(
+    {required Bill bill,
+    required List<ItemBill> listItemOutBill,
+    required List<ItemDepot> listSelectedItemsDepot,
+    required List<int> depotItemIndexList,
+    required Depot selectedDepot,
+    required String tagMain,
+    bool devMode = false}) async {
+  String tag = "$tagMain/addNewBillOutNew"; //listItemBill
+  Log(tag: tag, message: "Activate Function, : ${listItemOutBill.length}");
+  String tableName = billIOutTableName;
+  final db = await DBProvider.db.database;
+  //get the biggest id in the table
+  List<Map<String, Object?>> table;
+  bool tableExist = await DBProvider.db.checkExistTable(tableName: tableName);
+  if (!tableExist) {
+    Log(tag: tag, message: "table not exist, Try to create table");
+    await DBProvider.db
+        .creatTable(tableName, bill.createSqlTable(tableName: tableName));
+  }
+
+  table = await db.rawQuery("SELECT MAX(id)+1 as id FROM $tableName");
+  int id;
+  (table.first['id']).toString();
+  // ignore: prefer_is_empty
+  (table.first.isEmpty)
+      ? id = 0
+      : (table.first['id'] == null)
+          ? id = 0
+          : id = int.parse((table.first['id']).toString());
+  //insert to the table using the new id
+  Log(tag: tag, message: "Index is: $id");
+  var raw = await db.rawInsert(
+      "INSERT Into $tableName (id,depotId,dateTime, outsidePersonId,type,workerId, itemBills,totalPrices)"
+      " VALUES (?,?,?, ?,?,?, ?,? )",
+      [
+        id,
+        "NewDepotId${bill.type}$id",
+        bill.dateTime,
+        //
+        bill.outsidePersonId,
+        bill.type,
+        bill.workerId,
+        //
+        "itemBills$tableName${bill.type}$id",
+        bill.totalPrices
+      ]);
+  //ItemBill itemBill in listItemBill
+  Log(
+      tag: tag,
+      message: "length of list item bill : ${listItemOutBill.length}");
+  for (int i = 0; i < listItemOutBill.length; i++) {
+    Log(tag: tag, message: "i: $i");
+    var resItem = await DBProvider.db
+        .getObject(id: listItemOutBill[i].IDItem, tableName: itemTableName);
+    if (resItem.isNotEmpty) {
+      Item item = Item.fromJson(resItem.first);
+
+      if (item.count - listItemOutBill[i].number >= 0) {
+        Log(
+            tag: tag,
+            message: "Try to update item number, number is: ${item.count}");
+        item.count = item.count - listItemOutBill[i].number;
+        Log(tag: tag, message: "Count has been update: ${item.count}");
+        // update Item number
+        await DBProvider.db
+            .updateObject(v: item, tableName: itemTableName, id: item.ID);
+
+        Log(tag: tag, message: "Try to update itemDepot");
+        var resItemDepot = await DBProvider.db
+            .getObject(id: listItemOutBill[i].depotID, tableName: item.depotID);
+        if (resItemDepot.isNotEmpty) {
+          ItemDepot itemDepot = ItemDepot.fromJson(resItemDepot.first);
+          itemDepot.number = itemDepot.number - listItemOutBill[i].number;
+          if (itemDepot.number > 0) {
+            Log(tag: tag, message: "Update number item in depot");
+            await DBProvider.db.updateObject(
+                v: itemDepot,
+                tableName: item.depotID,
+                id: listItemOutBill[i].depotID);
+          } else {
+            Log(tag: tag, message: "delete depot item");
+            await DBProvider.db.deleteObject(
+                tableName: item.depotID, id: listItemOutBill[i].depotID);
+          }
+        }
+
+        ItemDepot depotItem = listSelectedItemsDepot[i];
+        listItemOutBill[i].billId = id;
+        Log(tag: tag, message: "Index is: $id");
+        Log(tag: tag, message: "try to get itemsDepot for $i");
+        var resItemsDepot = await DBProvider.db
+            .getAllObjects(tableName: selectedDepot.depotListItem);
+        if (resItemsDepot.isNotEmpty) {
+          Log(
+              tag: tag,
+              message: "get itemsDepot for depot ${selectedDepot.name}");
+          for (var itemsDepotJson in resItemsDepot) {
+            if (depotItem.depotId == itemsDepotJson['itemId']) {
+              Log(
+                  tag: tag,
+                  message: "ItemsDepot and ItemDepot has same item id");
+              ItemsDepot itemsDepot = ItemsDepot.fromJson(itemsDepotJson);
+              if (itemsDepot.number > listItemOutBill[i].number) {
+                Log(
+                    tag: tag,
+                    message: "ItemsDepot has number more than billOut number");
+
+                itemsDepot.number =
+                    itemsDepot.number - listItemOutBill[i].number;
+                Log(
+                    tag: tag,
+                    message:
+                        "update  itemsDepot, update Number is : ${itemsDepot.number}");
+                await DBProvider.db.updateObject(
+                    v: itemsDepot,
+                    tableName: selectedDepot.depotListItem,
+                    id: itemsDepot.id);
+
+                if (depotItem.number > 0) {
+                  Log(
+                      tag: tag,
+                      message: "Update number depotItem ${depotItem.number}");
+                  await DBProvider.db.updateObject(
+                      v: depotItem,
+                      tableName: selectedDepot.depotItem,
+                      id: depotItem.depotId);
+                } else {
+                  Log(tag: tag, message: "delete depot item ");
+                  await DBProvider.db.deleteObject(
+                      tableName: selectedDepot.depotItem,
+                      id: depotItem.depotId);
+                }
+
+                // Add item bill
+                Log(tag: tag, message: "Add item bill out");
+
+                ItemBillOut itemBillOut = ItemBillOut(
+                    id: listItemOutBill[i].id,
+                    IDItem: listItemOutBill[i].IDItem,
+                    number: listItemOutBill[i].number,
+                    productDate: listItemOutBill[i].productDate,
+                    date: bill.dateTime,
+                    win: listItemOutBill[i].win,
+                    price: listItemOutBill[i].price,
+                    depotID: listItemOutBill[i].depotID,
+                    billOutId: id,
+                    billIntId: itemsDepot.billId,
+                    billInItemId: itemsDepot.itemBillId,
+                    depotItemId: itemsDepot.id);
+                int idBillItem = await addNewBillOutItem(
+                    itemBillOut: itemBillOut, tagIn: tag);
+                Log(tag: tag, message: "Add  bill out depot ");
+                await addNewBillOutDepot(
+                    billOutDepot: BillOutDepot(
+                        id: id,
+                        itemBillInId: itemsDepot.itemBillId,
+                        billOutId: id,
+                        billOutItemId: idBillItem,
+                        number: listItemOutBill[i].number,
+                        itemDepotId: itemsDepot.id),
+                    tableName: selectedDepot.depotListOutItem);
+                break;
+              } else if (itemsDepot.number <= listItemOutBill[i].number) {
+                Log(
+                    tag: tag,
+                    message: "ItemsDepot has number less than billOut number");
+                Log(
+                    tag: tag,
+                    message: "Add new item bill out ${itemsDepot.number}");
+                ItemBillOut itemBillOut = ItemBillOut(
+                    id: listItemOutBill[i].id,
+                    IDItem: listItemOutBill[i].IDItem,
+                    number: itemsDepot.number,
+                    productDate: listItemOutBill[i].productDate,
+                    date: bill.dateTime,
+                    win: listItemOutBill[i].win,
+                    price: listItemOutBill[i].price,
+                    depotID: listItemOutBill[i].depotID,
+                    billOutId: id,
+                    billIntId: itemsDepot.billId,
+                    billInItemId: itemsDepot.itemBillId,
+                    depotItemId: itemsDepot.id);
+                await addNewBillOutItem(itemBillOut: itemBillOut, tagIn: tag);
+
+                Log(tag: tag, message: "delete itemsDepot and depotBillOut");
+                await DBProvider.db.deleteObject(
+                    tableName: selectedDepot.depotListItem, id: itemsDepot.id);
+                var billOutDepotItems =
+                    await DBProvider.db.getDepotBillOutItems(
+                  tableName: selectedDepot.depotListOutItem,
+                  itemDepotId: itemsDepot.id,
+                  itemBillInId: itemsDepot.itemBillId,
+                );
+                if (billOutDepotItems.isNotEmpty) {
+                  for (var jsonDepotOut in billOutDepotItems) {
+                    Log(tag: tag, message: "Delete BillOutDepot!!");
+                    BillOutDepot billOutDepot =
+                        BillOutDepot.fromJson(jsonDepotOut);
+                    await DBProvider.db.deleteObject(
+                        tableName: selectedDepot.depotListOutItem,
+                        id: billOutDepot.id);
+                  }
+                }
+                if (itemsDepot.number == listItemOutBill[i].number) {
+                  if (depotItem.number > 0) {
+                    Log(
+                        tag: tag,
+                        message:
+                            "Update number depotItem , ${depotItem.number}");
+                    await DBProvider.db.updateObject(
+                        v: depotItem,
+                        tableName: selectedDepot.depotItem,
+                        id: depotItem.depotId);
+                  } else {
+                    Log(tag: tag, message: "delete depot item ");
+                    await DBProvider.db.deleteObject(
+                        tableName: selectedDepot.depotItem,
+                        id: depotItem.depotId);
+                  }
+                  break;
+                }
+                listItemOutBill[i].number =
+                    listItemOutBill[i].number - itemsDepot.number;
+              }
+            }
+          }
+        } else {
+          Log(tag: tag, message: "itemsDepot is null");
+        }
+        selectedDepot.availableCapacity = selectedDepot.availableCapacity -
+            listItemOutBill[i].number * item.volume;
+        Log(tag: tag, message: "Update depots capacity");
+        await DBProvider.db.updateObject(
+            v: selectedDepot, tableName: depotTableName, id: selectedDepot.Id);
+      } else {
+        Log(
+            tag: tag,
+            message: "Error in Item count; item count: ${item.count}");
+      }
+    }
+
+    // update Item depot
+  }
+  //await managerItemCount(listItemOutBill: listItemOutBill, tagMain: tag);
+  return raw;
+}
+
+///******************************************************************************* */
 
 addNewBillItem({required ItemBill itemBill, required String type}) async {
   // table name  "itemBills${bill.type}$id"
@@ -539,6 +842,7 @@ deleteBillOut(
   }
 }
 
+/*******************************************************************************/
 deleteBillIn(
     {required Bill bill,
     required String tagMain,
@@ -741,9 +1045,7 @@ generateBillIn({required int year, required int month}) async {
                     itemBills: "",
                     totalPrices: totalPrice);
                 await addNewBillIn(
-                    bill: bill,
-                    listItemBill: listItemBill,
-                    isUniqueDepot: false);
+                    bill: bill, listItemBill: listItemBill, tagMain: tag);
               }
             }
           } else {
@@ -824,6 +1126,7 @@ generateBillOut(
         }
         if (listItemOutBill.isNotEmpty) {
           Log(tag: tag, message: "listItemOutBill is not null add bill out");
+
           await addNewBillOut(
               bill: Bill(
                   ID: 0,

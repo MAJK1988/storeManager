@@ -11,7 +11,10 @@ import '../utils/utils.dart';
 
 class BillUniqStoreIn extends StatefulWidget {
   final String billType;
-  const BillUniqStoreIn({super.key, this.billType = billIn});
+  final Item? item;
+  final Worker worker;
+  const BillUniqStoreIn(
+      {super.key, this.item, this.billType = billIn, required this.worker});
 
   @override
   State<BillUniqStoreIn> createState() => _BillUniqStoreInState();
@@ -31,7 +34,6 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
   late Item selectedItem;
   late Depot selectedDepot = intDepot;
   late Supplier selectedSupplier = intSupplier;
-  late Worker selectedWorker = intWorker;
   late String productionDate;
   late double itemNumber = 0;
   late double toTalPrice = 0.0;
@@ -44,9 +46,9 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
   late List<Depot> listDepotSelected = [];
   late List<ShowObject> listShowObject = [];
   late List<ShowObject> listShowObjectMainTable = [];
-  late List<ItemsDepot> listItemsDepot = [];
-  late List<ItemsDepot> listSelectedItemsDepot = [];
-  late ItemsDepot selectedItemsDepot = selectedItemsDepot.init();
+  late List<ItemDepot> listItemsDepot = [];
+  late List<ItemDepot> listSelectedItemsDepot = [];
+  late ItemDepot selectedItemsDepot = selectedItemsDepot.init();
   late List<String> listSearchElement = getElementsItems();
   late String initElementSearch = getElementsItems().first;
   late List<String> listObjectSearch = getObjectsNameListAddBillIn();
@@ -94,7 +96,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                   context: context)),
         ),
         //production date
-
+/*
         //price
         Card(
           child: Center(
@@ -107,7 +109,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
               ),
             )),
           ),
-        ),
+        ),*/
         //Depot
         // totalPrice
         Card(
@@ -150,7 +152,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                       selectedItem.volume;
                         }
                         if ((newAvailableCapacity < selectedDepot.capacity ||
-                                (selectedDepot.capacity == 0)) &&
+                                (true)) &&
                             widget.billType == billIn) {
                           setState(() {
                             if (indexDepot != -1) {
@@ -282,7 +284,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
         //production date
 
         //price
-        Card(
+        /*Card(
           child: Center(
             child: TableCell(
                 child: Padding(
@@ -293,7 +295,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
               ),
             )),
           ),
-        ),
+        ),*/
 
         // totalPrice
         Card(
@@ -327,9 +329,8 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                           tag: tag,
                           message:
                               " listItemsDepot[index].number: ${listSelectedItemsDepot[indexItemsDepot].number}, number: ${numberController.text}");
-                      availableItem =
-                          listSelectedItemsDepot[indexItemsDepot].number -
-                              double.parse(numberController.text);
+                      availableItem = selectedItemsDepot.number -
+                          double.parse(numberController.text);
 
                       if (availableItem < 0.0) {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -342,47 +343,40 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                             tag: tag,
                             message: "availableItem is: $availableItem");
 
-                        ItemsDepot itemDepot = ItemsDepot(
-                          id: selectedItemsDepot.id,
-                          itemId: selectedItemsDepot.itemId,
-                          itemBillId: selectedItemsDepot.itemBillId,
-                          number: availableItem,
-                          billId: selectedItemsDepot.billId,
-                        );
-                        var resItemBill = await DBProvider.db.getObject(
-                            id: selectedItemsDepot.itemBillId,
-                            tableName: billInItemTableName);
-                        if (resItemBill.isNotEmpty) {
-                          ItemBill itemBill =
-                              ItemBill.fromJson(resItemBill.first);
-                          setState(() {
-                            //listSelectedItemsDepot.remove(selectedItemsDepot);
-                            listSelectedItemsDepot[indexItemsDepot] =
-                                itemDepot; //itemBillIns listShowObjectMainTable listSelectedItemsDepot
-                            selectedItemsDepot = itemDepot;
+                        ItemDepot itemDepot = ItemDepot(
+                            number: availableItem, depotId: selectedItem.ID);
 
+                        setState(() {
+                          //listSelectedItemsDepot.remove(selectedItemsDepot);
+                          if (itemIsExistInListItemBill(
+                                  item: selectedItem,
+                                  listItemsDepot: listItemsDepot) ==
+                              -1) {
+                            Log(tag: tag, message: "New Item");
+                            listItemsDepot.add(itemDepot);
+
+                            listSelectedItemsDepot[indexItemsDepot] = itemDepot;
+                            selectedItemsDepot = itemDepot;
                             Log(
                                 tag: tag,
                                 message:
                                     "Update itemDepot, number is: ${itemDepot.number}, Index: $indexItemsDepot, listItemsDepot length: ${listItemsDepot.length}");
-
                             listSelectedItems.add(selectedItem);
                             depotItemIndexList.add(indexItemsDepot);
                             Log(
                                 tag: tag,
                                 message:
-                                    "Update itemDepot, number is: ${itemDepot.number}, Index: $indexItemsDepot, depotItemIndexList length: ${depotItemIndexList.length} ${depotItemIndexList[0]}");
-
+                                    "Update itemDepot, number is: ${itemDepot.number}, Index: $indexItemsDepot, depotItemIndexList length: ${depotItemIndexList.length}");
                             itemBillIns.add(ItemBill(
                                 id: 0,
                                 IDItem: selectedItem.ID,
                                 number: double.parse(numberController.text),
                                 productDate: dateProduction,
                                 date: "",
-                                win: itemBill.win *
+                                win: selectedItem.actualWin *
                                     double.parse(numberController.text),
-                                price: itemBill.price *
-                                    (1 + itemBill.win) *
+                                price: selectedItem.actualPrice *
+                                    (1 + selectedItem.actualWin) *
                                     double.parse(numberController.text),
                                 depotID: selectedDepot.Id,
                                 billId: -1));
@@ -403,35 +397,88 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                     selectedItem.actualPrice.toStringAsFixed(2),
                                 value4: selectedDepot.name,
                                 value5: totalPrice.toStringAsFixed(2)));
+                          } else {
+                            Log(tag: tag, message: "Item exist update lists");
+                            int selectedIndex = itemIsExistInListItemBill(
+                                item: selectedItem,
+                                listItemsDepot: listItemsDepot);
 
-                            selectedItem = Item(
-                              ID: -2,
-                              name: "",
-                              barCode: "",
-                              category: "",
-                              description: "",
-                              soldBy: "",
-                              madeIn: "",
-                              prices: "",
-                              validityPeriod: 0.0,
-                              volume: 0.0,
-                              actualPrice: 0.0,
-                              actualWin: 0.0,
-                              supplierID: "",
-                              customerID: "",
-                              depotID: "",
-                              count: 0,
-                              // image: ""
-                            );
+                            selectedItemsDepot = itemDepot;
+                            listItemsDepot[selectedIndex] = itemDepot;
 
-                            itemController.text = "";
-                            numberController.text = "";
+                            listSelectedItemsDepot[indexItemsDepot] = itemDepot;
 
-                            price = 0.0;
-                            totalPrice = 0.0;
-                            dateProduction = "";
-                          });
-                        }
+                            Log(
+                                tag: tag,
+                                message:
+                                    "Update itemDepot, number is: ${itemDepot.number}, Index: $indexItemsDepot, depotItemIndexList length: ${depotItemIndexList.length}");
+                            itemBillIns[selectedIndex] = ItemBill(
+                                id: 0,
+                                IDItem: selectedItem.ID,
+                                number: double.parse(numberController.text) +
+                                    itemBillIns[selectedIndex].number,
+                                productDate: dateProduction,
+                                date: "",
+                                win: selectedItem.actualWin *
+                                    (double.parse(numberController.text) +
+                                        itemBillIns[selectedIndex].number),
+                                price: selectedItem.actualPrice *
+                                    (1 + selectedItem.actualWin) *
+                                    (double.parse(numberController.text) +
+                                        itemBillIns[selectedIndex].number),
+                                depotID: selectedDepot.Id,
+                                billId: -1);
+                            toTalPrice = toTalPrice +
+                                selectedItem.actualPrice *
+                                    (double.parse(numberController.text) +
+                                        itemBillIns[selectedIndex].number);
+                            Log(
+                                tag: tag,
+                                message:
+                                    "Number of item bill is: ${itemBillIns.length}");
+
+                            listShowObjectMainTable[selectedIndex] = ShowObject(
+                                //
+                                value0: selectedItem.name,
+                                value1: itemBillIns[selectedIndex]
+                                    .number
+                                    .toStringAsFixed(2),
+                                value2: dateProduction,
+                                value3:
+                                    selectedItem.actualPrice.toStringAsFixed(2),
+                                value4: selectedDepot.name,
+                                value5: (selectedItem.actualPrice *
+                                        (double.parse(numberController.text) +
+                                            itemBillIns[selectedIndex].number))
+                                    .toStringAsFixed(2));
+                          }
+                          selectedItem = Item(
+                            ID: -2,
+                            name: "",
+                            barCode: "",
+                            category: "",
+                            description: "",
+                            soldBy: "",
+                            madeIn: "",
+                            prices: "",
+                            validityPeriod: 0.0,
+                            volume: 0.0,
+                            actualPrice: 0.0,
+                            actualWin: 0.0,
+                            supplierID: "",
+                            customerID: "",
+                            depotID: "",
+                            count: 0,
+                            // image: ""
+                          );
+
+                          itemController.text = "";
+                          numberController.text = "";
+
+                          price = 0.0;
+                          totalPrice = 0.0;
+                          dateProduction = "";
+                        });
                       }
                       OverlayLoadingProgress.stop();
                     }
@@ -458,22 +505,56 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
     return -1;
   }
 
+  initClass() async {
+    bool tableDepotExist =
+        await DBProvider.db.checkExistTable(tableName: depotTableName);
+    if (!tableDepotExist) {
+      await DBProvider.db.addNewDepot(depot: intDepot);
+    }
+    var resDepot = await DBProvider.db.getAllObjects(tableName: depotTableName);
+    if (resDepot.isNotEmpty) {
+      setState(() {
+        selectedDepot = Depot.fromJson(resDepot.first);
+      });
+    }
+    var resItemDepot =
+        await DBProvider.db.getAllObjects(tableName: selectedDepot.depotItem);
+    if (resItemDepot.isNotEmpty) {
+      for (var depotItem in resItemDepot) {
+        setState(() {
+          listSelectedItemsDepot.add(ItemDepot.fromJson(depotItem));
+        });
+      }
+      Log(
+          tag: tag,
+          message: "Number of depot item: ${listSelectedItemsDepot.length}");
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
+    if (widget.item != null) {
+      setState(() {
+        selectedItem = widget.item!;
+        itemController.text = widget.item!.name;
+        price = widget.item!.actualPrice;
+      });
+    }
+    setState(() {
+      workerController.text = widget.worker.name;
+      billInDateController.text = (DateTime(
+                  DateTime.now().year,
+                  DateTime.now().month,
+                  DateTime.now().day,
+                  DateTime.now().hour,
+                  DateTime.now().minute)
+              .toString())
+          .replaceAll(":00.000", "");
+    });
+
     () async {
-      var resItemDepot = await DBProvider.db
-          .getAllObjects(tableName: initDepot().depotListItem);
-      if (resItemDepot.isNotEmpty) {
-        for (var depotItem in resItemDepot) {
-          setState(() {
-            listSelectedItemsDepot.add(ItemsDepot.fromJson(depotItem));
-          });
-        }
-        Log(
-            tag: tag,
-            message: "Number of depot item: ${listSelectedItemsDepot.length}");
-      }
+      await initClass();
     }();
 
     super.initState();
@@ -499,6 +580,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                     padding: const EdgeInsets.only(top: 40, bottom: 30),
                     child: Card(
                         child: SearchColumnSTF(
+                      depot: selectedDepot,
                       initObjectSearch: initObjectSearch,
                       billType: widget.billType,
                       size: size,
@@ -519,8 +601,8 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                             selectedSupplier = value;
                             supplierController.text = selectedSupplier.name;
                           } else if (value is Worker) {
-                            selectedWorker = value;
-                            workerController.text = selectedWorker.name;
+                            //selectedWorker = value;
+                            //workerController.text = selectedWorker.name;
                           } else if (value is Item) {
                             selectedItem = value;
                             itemController.text = selectedItem.name;
@@ -645,12 +727,12 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                                   readOnly: true,
                                                   controller: workerController,
                                                   ontap: (value) {
-                                                    setState(() {
+                                                    /*setState(() {
                                                       searchVisibility =
                                                           !searchVisibility;
                                                       initObjectSearch =
                                                           "Worker";
-                                                    });
+                                                    });*/
                                                   },
                                                   onChang: (value) {},
                                                   context: context),
@@ -745,11 +827,11 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                                 readOnly: true,
                                                 controller: workerController,
                                                 ontap: (value) {
-                                                  setState(() {
+                                                  /* setState(() {
                                                     searchVisibility =
                                                         !searchVisibility;
                                                     initObjectSearch = "Worker";
-                                                  });
+                                                  });*/
                                                 },
                                                 onChang: (value) {},
                                                 context: context),
@@ -892,9 +974,6 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                               OverlayLoadingProgress.start(
                                                   context);
                                               if (widget.billType == billIn) {
-                                                Log(
-                                                    tag: tag,
-                                                    message: "Start bill save");
                                                 if (listSelectedItems
                                                         .isNotEmpty &&
                                                     selectedSupplier.Id != -1 &&
@@ -902,6 +981,10 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                                         .text.isNotEmpty &&
                                                     listShowObjectMainTable
                                                         .isNotEmpty) {
+                                                  Log(
+                                                      tag: tag,
+                                                      message:
+                                                          "Start bill save");
                                                   Bill bill = Bill(
                                                       ID: 0,
                                                       depotId: "",
@@ -913,30 +996,29 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                                           selectedSupplier.Id,
                                                       type: widget.billType,
                                                       workerId:
-                                                          selectedWorker.Id,
+                                                          widget.worker.Id,
                                                       itemBills: "",
                                                       totalPrices: toTalPrice);
                                                   await addNewBillIn(
+                                                      tagMain: tag,
                                                       bill: bill,
-                                                      isUniqueDepot: true,
                                                       listItemBill:
                                                           itemBillIns);
+
                                                   setState(() {
                                                     itemBillIns.clear();
                                                     listShowObjectMainTable
                                                         .clear();
                                                     selectedSupplier =
                                                         selectedSupplier.init();
-                                                    selectedWorker =
-                                                        selectedWorker.init();
 
                                                     toTalPrice = 0.0;
                                                     supplierController.text =
                                                         "";
-                                                    workerController.text = "";
-                                                    billInDateController.text =
-                                                        "";
+                                                    //workerController.text = "";
+                                                    //billInDateController.text ="";
                                                   });
+                                                  await initClass();
 
                                                   Log(
                                                       tag: tag,
@@ -953,7 +1035,6 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                                     listSelectedItemsDepot
                                                         .isNotEmpty &&
                                                     selectedSupplier.Id != -1 &&
-                                                    selectedWorker.Id != -1 &&
                                                     listShowObjectMainTable
                                                         .isNotEmpty) {
                                                   Log(
@@ -971,41 +1052,37 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                                     outsidePersonId:
                                                         selectedSupplier.Id,
                                                     type: widget.billType,
-                                                    workerId: selectedWorker.Id,
+                                                    workerId: widget.worker.Id,
                                                     itemBills: "",
                                                     totalPrices: toTalPrice);
                                                 //listItems
-                                                await addNewBillOut(
+                                                await addNewBillOutNew(
                                                     bill: bill,
                                                     listItemOutBill:
                                                         itemBillIns,
                                                     listSelectedItemsDepot:
-                                                        listSelectedItemsDepot,
+                                                        listItemsDepot,
                                                     selectedDepot:
                                                         selectedDepot,
                                                     depotItemIndexList:
                                                         depotItemIndexList,
                                                     tagMain: tag);
                                                 setState(() {
+                                                  listItemsDepot.clear();
                                                   itemBillIns.clear();
                                                   listShowObjectMainTable
                                                       .clear();
                                                   selectedSupplier =
                                                       selectedSupplier.init();
-                                                  selectedWorker =
-                                                      selectedWorker.init();
 
                                                   toTalPrice = 0.0;
                                                   supplierController.text = "";
-                                                  workerController.text = "";
-                                                  billInDateController.text =
-                                                      "";
-                                                  listSelectedItemsDepot
-                                                      .clear();
-                                                  selectedDepot =
-                                                      selectedDepot.init();
+                                                  // workerController.text = "";
+                                                  // billInDateController.text ="";
+                                                  listSelectedItemsDepot = [];
+                                                  //selectedDepot = intDepot;
 
-                                                  depotItemIndexList.clear();
+                                                  depotItemIndexList = [];
                                                   listShowObject = [];
                                                   tableName = depotTableName;
                                                   initObjectSearch = "Depot";
@@ -1016,6 +1093,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
 
                                                   //searchFunctionConfig();
                                                 });
+                                                await initClass();
                                               }
                                               OverlayLoadingProgress.stop();
                                             }
@@ -1029,7 +1107,6 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                     hoverColor: Colors.blue.shade50,
                                     onPressed: () async {
                                       if (selectedSupplier.Id != -1 &&
-                                          selectedWorker.Id != -1 &&
                                           toTalPrice != 0 &&
                                           billInDateController.text != "" &&
                                           listShowObjectMainTable.isNotEmpty) {
@@ -1040,7 +1117,7 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                                             totalPrice:
                                                 toTalPrice.toStringAsFixed(2),
                                             date: billInDateController.text,
-                                            workerName: selectedWorker.name,
+                                            workerName: widget.worker.name,
                                             outSidePersonnel:
                                                 selectedSupplier.name,
                                             listShowObjectMainTable:
@@ -1075,5 +1152,22 @@ class _BillUniqStoreInState extends State<BillUniqStoreIn> {
                 listShowObjectMainTable: listShowObjectMainTable,
               )),
     );
+  }
+
+  int itemIsExistInListItemBill(
+      {required Item item, required List<ItemDepot> listItemsDepot}) {
+    Log(
+        tag: tag,
+        message: "Start itemIsExistInListItemBill, ${listItemsDepot.length}");
+    for (int i = 0; i < listItemsDepot.length; i++) {
+      Log(
+          tag: tag,
+          message:
+              "listItemsDepot[${i}].depotId:${listItemsDepot[i].depotId} item.ID:${item.ID}");
+      if (listItemsDepot[i].depotId == item.ID) {
+        return i;
+      }
+    }
+    return -1;
   }
 }

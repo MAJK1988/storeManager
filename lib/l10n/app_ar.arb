@@ -83,7 +83,7 @@
       "error_password":"رجاء التاكد من كلمة المرور",
       "validate_new_password":"تحقق من صحة كلمة المرور",
       "password":"كلمة المرور",
-      "password1":"كلمة المرور1",
+      "password1":"تأكيد كلمة المرور",
       "email":"بريدك الإلكتروني",
       "manager":"مدير المحل",
       "manager_item":"مدير المواد",
@@ -100,7 +100,18 @@
       "add_account":"إنشاء حساب" ,
       "assistant":"مساعد", 
       "director":"مدير",
-      "seller":"بائع"
+      "seller":"بائع",
+      "update_account":"تعديل الحساب",
+     "delete_account":"حذف الحساب",
+     "no_account":"ليس لديك حساب؟", 
+      "has_account":"هل لديك حساب ؟",
+       "sign_up": "قم بالتسجيل",
+       "sign_in": "تسجيل الدخول",
+       "user_exist": "المستخدم موجود !!",
+       "register": "تسجيل",
+       "type_name": "اكتب اسمك",
+      "manager_account":"إدارة الحساب",
+      "manager_error_message":"لا يمكنك حذف المستخدم ، المستخدم مدير !!"
      
 
 

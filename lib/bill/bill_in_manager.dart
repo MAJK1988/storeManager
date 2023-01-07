@@ -108,7 +108,7 @@ class _BillInManagerState extends State<BillInManager> {
         widget.typeBill == billIn ? billInTableName : billIOutTableName;
     Log(tag: tag, message: "tableName: $tableName");
     var res = await DBProvider.db.getAllObjects(tableName: tableName);
-
+    Log(tag: tag, message: "BillIn objects length: ${res.length}");
     if (res.isNotEmpty) {
       for (var b in res) {
         Bill bill = Bill.fromJson(b);
@@ -118,7 +118,7 @@ class _BillInManagerState extends State<BillInManager> {
         //get bill supplier
         var resS = await DBProvider.db
             .getObject(id: bill.outsidePersonId, tableName: supplierTableName);
-
+        Log(tag: tag, message: "resW: ${resW.length}, resS: ${resS.length}");
         if (resS.isNotEmpty && resW.isNotEmpty) {
           setState(() {
             bills.add(bill);
@@ -655,14 +655,14 @@ class _BillInManagerState extends State<BillInManager> {
                                   tag: tag,
                                   message:
                                       "Try to launch delete bill process ${widget.typeBill}");
-                              OverlayLoadingProgress.start(context);
+
                               Bill b = bills[indexBill];
                               if (widget.typeBill == billOut) {
                                 await deleteBillOut(bill: b, tagMain: tag);
                               } else {
                                 await deleteBillIn(bill: b, tagMain: tag);
                               }
-                              OverlayLoadingProgress.stop();
+
                               await initUI();
                             }
                           }));
